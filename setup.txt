@@ -1,0 +1,37 @@
+# MaxTime
+0.1
+# dt 
+0.001
+# maxIteration
+50
+
+# Mode
+# Transient == 0
+# Steady State (only suitable for single phase flow) == 1
+1
+
+# Convection Scheme
+# Upwind == 0
+# Potenzgesetz == 1
+# Central == 2
+# Exponential == 3
+# Hybrid == 4
+0
+
+# Velocity Solver
+# IMPLICIT BiCGStab == 0
+# IMPLICIT SparseLU == 1
+# IMPLICIT GaussSeidl == 2
+# EXPLICIT == 3
+0
+
+# Pressure Solver
+# BiCGStab == 0
+# SparseLU == 1
+0
+
+# density1 viscosity1
+0.3 49.15
+
+# density2 viscosity2
+0.5 0.2
