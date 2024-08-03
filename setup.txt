@@ -8,7 +8,7 @@
 # Mode
 # Transient == 0
 # Steady State (only suitable for single phase flow) == 1
-0
+1
 
 # Convection Scheme
 # Upwind == 0

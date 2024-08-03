@@ -866,28 +866,28 @@ void computePressureCoeff2(Data2D& data, int cellId){
     double dy = curCell->faces[WEST]->dy;
 
     double b_e = (0.5 * (fRho(data, curCell->neighCells[EAST]->alpha) + fRho(data, curCell->alpha)) * dy) / curCell->faces[EAST]->a_p_tilde
-                * ((curCell->neighCells[EAST]->faces[EAST]->u[CORRECTED_1] - curCell->neighCells[EAST]->faces[EAST]->u[INITIAL]) * curCell->neighCells[EAST]->faces[EAST]->a_p_tilde
-                + (curCell->faces[WEST]->u[CORRECTED_1] - curCell->faces[WEST]->u[INITIAL]) * curCell->faces[WEST]->a_p_tilde
-                + (curCell->neighCells[NORTH]->faces[EAST]->u[CORRECTED_1] - curCell->neighCells[NORTH]->faces[EAST]->u[INITIAL]) * curCell->neighCells[NORTH]->faces[EAST]->a_p_tilde
-                + (curCell->neighCells[SOUTH]->faces[EAST]->u[CORRECTED_1] - curCell->neighCells[SOUTH]->faces[EAST]->u[INITIAL]) * curCell->neighCells[SOUTH]->faces[EAST]->a_p_tilde); 
+                * ((curCell->neighCells[EAST]->faces[EAST]->u[CORRECTED_1] - curCell->neighCells[EAST]->faces[EAST]->u[INTERMEDIATE_1]) * curCell->neighCells[EAST]->faces[EAST]->a_p_tilde
+                + (curCell->faces[WEST]->u[CORRECTED_1] - curCell->faces[WEST]->u[INTERMEDIATE_1]) * curCell->faces[WEST]->a_p_tilde
+                + (curCell->neighCells[NORTH]->faces[EAST]->u[CORRECTED_1] - curCell->neighCells[NORTH]->faces[EAST]->u[INTERMEDIATE_1]) * curCell->neighCells[NORTH]->faces[EAST]->a_p_tilde
+                + (curCell->neighCells[SOUTH]->faces[EAST]->u[CORRECTED_1] - curCell->neighCells[SOUTH]->faces[EAST]->u[INTERMEDIATE_1]) * curCell->neighCells[SOUTH]->faces[EAST]->a_p_tilde); 
 
     double b_w = (0.5 * (fRho(data, curCell->neighCells[WEST]->alpha) + fRho(data, curCell->alpha)) * dy) / curCell->faces[WEST]->a_p_tilde
-                * ((curCell->faces[EAST]->u[CORRECTED_1] - curCell->faces[EAST]->u[INITIAL]) * curCell->faces[EAST]->a_p_tilde
-                + (curCell->neighCells[WEST]->faces[WEST]->u[CORRECTED_1] - curCell->neighCells[WEST]->faces[WEST]->u[INITIAL]) * curCell->neighCells[WEST]->faces[WEST]->a_p_tilde
-                + (curCell->neighCells[NORTH]->faces[WEST]->u[CORRECTED_1] - curCell->neighCells[NORTH]->faces[WEST]->u[INITIAL]) * curCell->neighCells[NORTH]->faces[WEST]->a_p_tilde
-                + (curCell->neighCells[SOUTH]->faces[WEST]->u[CORRECTED_1] - curCell->neighCells[SOUTH]->faces[WEST]->u[INITIAL]) * curCell->neighCells[SOUTH]->faces[WEST]->a_p_tilde);
+                * ((curCell->faces[EAST]->u[CORRECTED_1] - curCell->faces[EAST]->u[INTERMEDIATE_1]) * curCell->faces[EAST]->a_p_tilde
+                + (curCell->neighCells[WEST]->faces[WEST]->u[CORRECTED_1] - curCell->neighCells[WEST]->faces[WEST]->u[INTERMEDIATE_1]) * curCell->neighCells[WEST]->faces[WEST]->a_p_tilde
+                + (curCell->neighCells[NORTH]->faces[WEST]->u[CORRECTED_1] - curCell->neighCells[NORTH]->faces[WEST]->u[INTERMEDIATE_1]) * curCell->neighCells[NORTH]->faces[WEST]->a_p_tilde
+                + (curCell->neighCells[SOUTH]->faces[WEST]->u[CORRECTED_1] - curCell->neighCells[SOUTH]->faces[WEST]->u[INTERMEDIATE_1]) * curCell->neighCells[SOUTH]->faces[WEST]->a_p_tilde);
 
     double b_n = (0.5 * (fRho(data, curCell->neighCells[NORTH]->alpha) + fRho(data, curCell->alpha)) * dx) / curCell->faces[NORTH]->a_p_tilde
-                * ((curCell->neighCells[NORTH]->faces[NORTH]->v[CORRECTED_1] - curCell->neighCells[NORTH]->faces[NORTH]->v[INITIAL]) * curCell->neighCells[NORTH]->faces[NORTH]->a_p_tilde
-                + (curCell->neighCells[WEST]->faces[NORTH]->v[CORRECTED_1] - curCell->neighCells[WEST]->faces[NORTH]->v[INITIAL]) * curCell->neighCells[WEST]->faces[NORTH]->a_p_tilde
-                + (curCell->neighCells[EAST]->faces[NORTH]->v[CORRECTED_1] - curCell->neighCells[EAST]->faces[NORTH]->v[INITIAL]) * curCell->neighCells[EAST]->faces[NORTH]->a_p_tilde
-                + (curCell->faces[SOUTH]->v[CORRECTED_1] - curCell->faces[SOUTH]->v[INITIAL]) * curCell->faces[SOUTH]->a_p_tilde);
+                * ((curCell->neighCells[NORTH]->faces[NORTH]->v[CORRECTED_1] - curCell->neighCells[NORTH]->faces[NORTH]->v[INTERMEDIATE_1]) * curCell->neighCells[NORTH]->faces[NORTH]->a_p_tilde
+                + (curCell->neighCells[WEST]->faces[NORTH]->v[CORRECTED_1] - curCell->neighCells[WEST]->faces[NORTH]->v[INTERMEDIATE_1]) * curCell->neighCells[WEST]->faces[NORTH]->a_p_tilde
+                + (curCell->neighCells[EAST]->faces[NORTH]->v[CORRECTED_1] - curCell->neighCells[EAST]->faces[NORTH]->v[INTERMEDIATE_1]) * curCell->neighCells[EAST]->faces[NORTH]->a_p_tilde
+                + (curCell->faces[SOUTH]->v[CORRECTED_1] - curCell->faces[SOUTH]->v[INTERMEDIATE_1]) * curCell->faces[SOUTH]->a_p_tilde);
 
     double b_s = (0.5 * (fRho(data, curCell->neighCells[SOUTH]->alpha) + fRho(data, curCell->alpha)) * dx) / curCell->faces[SOUTH]->a_p_tilde
-                * ((curCell->faces[NORTH]->v[CORRECTED_1] - curCell->faces[NORTH]->v[INITIAL]) * curCell->faces[NORTH]->a_p_tilde
-                + (curCell->neighCells[WEST]->faces[SOUTH]->v[CORRECTED_1] - curCell->neighCells[WEST]->faces[SOUTH]->v[INITIAL]) * curCell->neighCells[WEST]->faces[SOUTH]->a_p_tilde
-                + (curCell->neighCells[EAST]->faces[SOUTH]->v[CORRECTED_1] - curCell->neighCells[EAST]->faces[SOUTH]->v[INITIAL]) * curCell->neighCells[EAST]->faces[SOUTH]->a_p_tilde
-                + (curCell->faces[SOUTH]->v[CORRECTED_1] - curCell->faces[SOUTH]->v[INITIAL]) * curCell->faces[SOUTH]->a_p_tilde);
+                * ((curCell->faces[NORTH]->v[CORRECTED_1] - curCell->faces[NORTH]->v[INTERMEDIATE_1]) * curCell->faces[NORTH]->a_p_tilde
+                + (curCell->neighCells[WEST]->faces[SOUTH]->v[CORRECTED_1] - curCell->neighCells[WEST]->faces[SOUTH]->v[INTERMEDIATE_1]) * curCell->neighCells[WEST]->faces[SOUTH]->a_p_tilde
+                + (curCell->neighCells[EAST]->faces[SOUTH]->v[CORRECTED_1] - curCell->neighCells[EAST]->faces[SOUTH]->v[INTERMEDIATE_1]) * curCell->neighCells[EAST]->faces[SOUTH]->a_p_tilde
+                + (curCell->faces[SOUTH]->v[CORRECTED_1] - curCell->faces[SOUTH]->v[INTERMEDIATE_1]) * curCell->faces[SOUTH]->a_p_tilde);
     
     curCell->b = b_e + b_w + b_n + b_s;
     if (data.mode == 0){
@@ -972,8 +972,7 @@ void corrector2(Data2D& data){
                 }
             }
         }
-    }
-    
+    }  
 }
 
 void computeScalarCoeff(Data2D& data, int cellId){
