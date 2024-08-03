@@ -817,10 +817,10 @@ void corrector1(Data2D& data) {
         Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
             if (i < data.nhorizontalFaces) {
-                curFace->v[CORRECTED_1] = curFace->v[INITIAL] + ((curFace->neighCells[UP]->p[INTERMEDIATE_1] - curFace->neighCells[DOWN]->p[INTERMEDIATE_1]) * curFace->dx) / curFace->a_p_tilde;
+                curFace->v[CORRECTED_1] = curFace->v[INTERMEDIATE_1] + ((curFace->neighCells[UP]->p[INTERMEDIATE_1] - curFace->neighCells[DOWN]->p[INTERMEDIATE_1]) * curFace->dx) / curFace->a_p_tilde;
                 // std::cout << "Face " << i << "; v: " << curFace->v[step + 1] << std::endl;
             } else if (i >= data.nhorizontalFaces) {
-                curFace->u[CORRECTED_1] = curFace->u[INITIAL] + ((curFace->neighCells[LEFT]->p[INTERMEDIATE_1] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_1]) * curFace->dy) / curFace->a_p_tilde;
+                curFace->u[CORRECTED_1] = curFace->u[INTERMEDIATE_1] + ((curFace->neighCells[LEFT]->p[INTERMEDIATE_1] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_1]) * curFace->dy) / curFace->a_p_tilde;
                 // std::cout << "Face " << i << "; u: " << curFace->u[step + 1] << std::endl;
             }   
         } 
@@ -912,20 +912,20 @@ void corrector2(Data2D& data){
         Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
             if (i < data.nhorizontalFaces) {
-                double dv_w = curFace->neighCells[NORTH]->neighCells[WEST]->faces[SOUTH]->v[CORRECTED_1] - curFace->neighCells[NORTH]->neighCells[WEST]->faces[SOUTH]->v[INITIAL];
-                double dv_e = curFace->neighCells[NORTH]->neighCells[EAST]->faces[SOUTH]->v[CORRECTED_1] - curFace->neighCells[NORTH]->neighCells[EAST]->faces[SOUTH]->v[INITIAL];
-                double dv_n = curFace->neighCells[NORTH]->faces[NORTH]->v[CORRECTED_1] - curFace->neighCells[NORTH]->faces[NORTH]->v[INITIAL];
-                double dv_s = curFace->neighCells[NORTH]->faces[SOUTH]->v[CORRECTED_1] - curFace->neighCells[NORTH]->faces[SOUTH]->v[INITIAL];
+                double dv_w = curFace->neighCells[NORTH]->neighCells[WEST]->faces[SOUTH]->v[CORRECTED_1] - curFace->neighCells[NORTH]->neighCells[WEST]->faces[SOUTH]->v[INTERMEDIATE_1];
+                double dv_e = curFace->neighCells[NORTH]->neighCells[EAST]->faces[SOUTH]->v[CORRECTED_1] - curFace->neighCells[NORTH]->neighCells[EAST]->faces[SOUTH]->v[INTERMEDIATE_1];
+                double dv_n = curFace->neighCells[NORTH]->faces[NORTH]->v[CORRECTED_1] - curFace->neighCells[NORTH]->faces[NORTH]->v[INTERMEDIATE_1];
+                double dv_s = curFace->neighCells[NORTH]->faces[SOUTH]->v[CORRECTED_1] - curFace->neighCells[NORTH]->faces[SOUTH]->v[INTERMEDIATE_1];
                 double a_dv_nb = curFace->neighCells[NORTH]->neighCells[WEST]->faces[SOUTH]->a_p_tilde * dv_w
                             + curFace->neighCells[NORTH]->neighCells[EAST]->faces[SOUTH]->a_p_tilde * dv_e
                             + curFace->neighCells[NORTH]->faces[NORTH]->a_p_tilde * dv_n
                             + curFace->neighCells[NORTH]->faces[SOUTH]->a_p_tilde * dv_s;
                 curFace->v[CORRECTED_2] = curFace->v[CORRECTED_1] + ((curFace->neighCells[UP]->p[INTERMEDIATE_2] - curFace->neighCells[DOWN]->p[INTERMEDIATE_2]) * curFace->dx + a_dv_nb) / curFace->a_p_tilde;
             } else if (i >= data.nhorizontalFaces) {
-                double du_w = curFace->neighCells[LEFT]->faces[WEST]->u[CORRECTED_1] - curFace->neighCells[LEFT]->faces[WEST]->u[INITIAL];
-                double du_e = curFace->neighCells[RIGHT]->faces[EAST]->u[CORRECTED_1] - curFace->neighCells[RIGHT]->faces[EAST]->u[INITIAL];
-                double du_n = curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->u[CORRECTED_1] - curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->u[INITIAL];
-                double du_s = curFace->neighCells[RIGHT]->neighCells[SOUTH]->faces[WEST]->u[CORRECTED_1] - curFace->neighCells[RIGHT]->neighCells[SOUTH]->faces[WEST]->u[INITIAL];
+                double du_w = curFace->neighCells[LEFT]->faces[WEST]->u[CORRECTED_1] - curFace->neighCells[LEFT]->faces[WEST]->u[INTERMEDIATE_1];
+                double du_e = curFace->neighCells[RIGHT]->faces[EAST]->u[CORRECTED_1] - curFace->neighCells[RIGHT]->faces[EAST]->u[INTERMEDIATE_1];
+                double du_n = curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->u[CORRECTED_1] - curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->u[INTERMEDIATE_1];
+                double du_s = curFace->neighCells[RIGHT]->neighCells[SOUTH]->faces[WEST]->u[CORRECTED_1] - curFace->neighCells[RIGHT]->neighCells[SOUTH]->faces[WEST]->u[INTERMEDIATE_1];
                 double a_du_nb = curFace->neighCells[LEFT]->faces[WEST]->a_p_tilde * du_w
                             + curFace->neighCells[RIGHT]->faces[EAST]->a_p_tilde * du_e
                             + curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->a_p_tilde * du_n
