@@ -46,9 +46,9 @@ void cellsConstPressure(std::vector<std::string>& CellProp, int xDim, int yDim, 
     int cellIndex = 0;
     for (int i = 0; i < (xDim - 1) * (yDim - 1); i++) {
         if (i >= (xDim - 1) * (yDim - 1) - xDim + 1) {
-            CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(pressure));
-        } else if (i < xDim - 1) {
             CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_sc) + " " + std::to_string(top_p) + " " + std::to_string(pressure));
+        } else if (i < xDim - 1) {
+            CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(pressure));
         } else if (i % (xDim - 1) == xDim - 2) {
             CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_sc) + " " + std::to_string(right_p) + " " + std::to_string(pressure));
         } else if (i % (xDim - 1) == 0) {
@@ -69,9 +69,9 @@ void cellsPressureGradient_y(std::vector<std::string>& cellProp, int xDim, int y
         double p_y = pressure_up + i * p_grad_y;
         for(int j = 0; j < xDim - 1; j++){
             if (i >= (xDim - 1) * (yDim - 1) - xDim + 1) {
-                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(p_y));
-            } else if (i < xDim - 1) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_sc) + " " + std::to_string(top_p) + " " + std::to_string(p_y));
+            } else if (i < xDim - 1) {
+                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(p_y));
             } else if (i % (xDim - 1) == xDim - 2) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_sc) + " " + std::to_string(right_p) + " " + std::to_string(p_y));
 
@@ -96,9 +96,9 @@ void cellsPressureGradient_x(std::vector<std::string>& cellProp, int xDim, int y
         double p_x = pressure_left;
         for(int j = 0; j < xDim - 1; j++){
             if (i >= (xDim - 1) * (yDim - 1) - xDim + 1) {
-                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(p_x));
-            } else if (i < xDim - 1) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_sc) + " " + std::to_string(top_p) + " " + std::to_string(p_x));
+            } else if (i < xDim - 1) {
+                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(p_x));
             } else if (i % (xDim - 1) == xDim - 2) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_sc) + " " + std::to_string(right_p) + " " + std::to_string(p_x));
             } else if (i % (xDim - 1) == 0) {
@@ -284,16 +284,16 @@ void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
                 m++;
             }
             if (i >= (xDim - 1) * yDim - xDim + 1 && i < (xDim - 1) * yDim) {	            //horizonal faces (bottom boundary)
-                meshFile << faceIndex << " " << keywordValues.at("bottom_vel") << " " << keywordValues.at("bottom_u") << " " << keywordValues.at("bottom_v") << std::endl;
+                meshFile << faceIndex << " " << keywordValues.at("top_vel") << " " << keywordValues.at("top_u") << " " << keywordValues.at("top_v") << std::endl;
 
             } else if (i >= (xDim - 1) * yDim + (yDim - 1) * xDim - xDim) {                 //vertical faces (bottom boundary)
-                meshFile << faceIndex << " " << keywordValues.at("bottom_vel") << " " << keywordValues.at("bottom_u") << " " << keywordValues.at("bottom_v") << std::endl;
+                meshFile << faceIndex << " " << keywordValues.at("top_vel") << " " << keywordValues.at("top_u") << " " << keywordValues.at("top_v") << std::endl;
 
             } else if (i < (xDim - 1)) {                                                    //horizontal faces (top boundary)  
-                meshFile << faceIndex << " " << keywordValues.at("top_vel") << " " << keywordValues.at("top_u") << " " << keywordValues.at("top_v") << std::endl;
+                meshFile << faceIndex << " " << keywordValues.at("bottom_vel") << " " << keywordValues.at("bottom_u") << " " << keywordValues.at("bottom_v") << std::endl;
 
             } else if (i >= (xDim - 1) * yDim && i < (xDim - 1) * yDim + xDim) {            //vertical faces (top boundary)
-                meshFile << faceIndex << " " << keywordValues.at("top_vel") << " " << keywordValues.at("top_u") << " " << keywordValues.at("top_v") << std::endl;
+                meshFile << faceIndex << " " << keywordValues.at("bottom_vel") << " " << keywordValues.at("bottom_u") << " " << keywordValues.at("bottom_v") << std::endl;
 
             } else if (i % (xDim - 1) == 0 && i <= (xDim - 1) * yDim) {                     //horizontal faces (left boundary)
                 meshFile << faceIndex << " " << keywordValues.at("left_vel") << " " << keywordValues.at("left_u") << " " << keywordValues.at("left_v") << std::endl;
