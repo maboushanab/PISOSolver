@@ -12,6 +12,7 @@ struct Data2D;
 struct Point2D;
 struct Cell2D;
 struct Face2D;
+struct Line2D;
 
 typedef Eigen::SparseMatrix<double> SpMat;
 typedef Eigen::Triplet<double> Triplet;
@@ -94,6 +95,7 @@ struct Cell2D {
     Face2D* faces[4];       //cell faces
     Point2D* points[4];     //cell points
     Cell2D* neighCells[4];  //neighbour cells
+    Line2D interfaceLine;   //interface line
 
 
     double x;              //cell center x-coordinate
@@ -101,6 +103,9 @@ struct Cell2D {
 
     double alpha;           //phase fraction
     double alpha_prev;      //alpha(t-1)
+
+    double normalVector[2]; //normal vector
+    double interfaceDistance; //interface distance from cell center
 
     // numeric quantities
     int     bType_sc;         // scalar boundary type
@@ -171,6 +176,11 @@ struct Data2D {
 
     std::stack <double> continuityResiduals;                    //continuity residuals
     std::stack <std::stack<double>> stackOfContinuityResiduals; //stack of continuity residuals
+};
+
+struct Line2D {
+    double m;
+    double n;
 };
 
 #endif
