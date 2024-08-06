@@ -206,3 +206,16 @@ void estimateInterfaceLine(Data2D& data, int cellId){
     }
     curCell->interfaceLine.n = n;
 }
+
+/**
+ * Estimates the interface lines for the given data.
+ * This function calculates the alpha normal vector and estimates the interface line for each cell in the data.
+ *
+ * @param data The 2D data set.
+ */
+void reconstructInterfaceLines(Data2D& data){
+    for (int i = 0; i < data.nCells; i++){
+        calcAlphaNormalVector(data, i);
+        estimateInterfaceLine(data, i);
+    }
+}
