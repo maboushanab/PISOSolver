@@ -12,7 +12,7 @@
  * nx = (nx_C + nx_Y)/2
  * ny = (ny_C + ny_Y)/2
  * 
- * @param data The Data2D object containing the cell and face data.
+ * @param data The 2D data set.
  * @param cellId The ID of the cell for which to calculate the normal vector.
  */
 void calcAlphaNormalVector(Data2D& data, int cellId){
