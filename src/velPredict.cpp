@@ -191,24 +191,28 @@ void setMomentumEquationMatrix(Data2D& data, SpMat& momMatrix, Vector& momVector
                 momVector(i) = curFace->u[INITIAL];
             }
         } else if (curFace->bType_u == NEUMANN) {
-            momMatrix.insert(i, i) = -1.0;
+            momMatrix.insert(i, i) = 1.0;
             if (i < data.nhorizontalFaces) {
-                if (curFace->neighCells[UP] != nullptr) {
+                if (curFace->neighCells[UP] != nullptr) {               // Bottom Boundary
                     int j = curFace->neighCells[UP]->faces[NORTH]->id;
-                    momMatrix.insert(i, j) = 1.0;
+                    momMatrix.insert(i, j) = -1.0;
+                    momVector(i) = -curFace->g_v*curFace->dy;
                 }
-                if (curFace->neighCells[DOWN] != nullptr) {
+                if (curFace->neighCells[DOWN] != nullptr) {             // Top Boundary
                     int j = curFace->neighCells[DOWN]->faces[SOUTH]->id;
-                    momMatrix.insert(i, j) = 1.0;
+                    momMatrix.insert(i, j) = -1.0;
+                    momVector(i) = curFace->g_v*curFace->dy;
                 }
             } else {
-                if (curFace->neighCells[LEFT] != nullptr) {
+                if (curFace->neighCells[LEFT] != nullptr) {             // Right Boundary
                     int j = curFace->neighCells[LEFT]->faces[WEST]->id;
-                    momMatrix.insert(i, j) = 1.0;
+                    momMatrix.insert(i, j) = -1.0;
+                    momVector(i) = curFace->g_u*curFace->dx;
                 }
-                if (curFace->neighCells[RIGHT] != nullptr) {
+                if (curFace->neighCells[RIGHT] != nullptr) {            // Left Boundary
                     int j = curFace->neighCells[RIGHT]->faces[EAST]->id;
-                    momMatrix.insert(i, j) = 1.0;
+                    momMatrix.insert(i, j) = -1.0;
+                    momVector(i) = -curFace->g_u*curFace->dx;
                 }
             }
         }

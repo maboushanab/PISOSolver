@@ -140,7 +140,7 @@ void computeScalarCoeff(Data2D& data, int cellId){
     curCell->a_w_sc = d_w * dy * A(data, f_w / d_w) + std::max(f_w*dy, 0.0);
     curCell->a_n_sc = d_n * dx * A(data, g_n / d_n) + std::max(-g_n*dx, 0.0);
     curCell->a_s_sc = d_s * dx * A(data, g_s / d_s) + std::max(g_s*dx, 0.0);
-    curCell->b_sc = curCell->a_p_v_sc*curCell->sc;
+    curCell->b_sc = curCell->a_p_v_sc*curCell->alpha;
     curCell->a_p_v_sc = fRho(data, curCell->neighCells[NORTH]->alpha) * dx * dy / dt;
     curCell->a_p_sc = curCell->a_e_sc + curCell->a_w_sc + curCell->a_n_sc + curCell->a_s_sc + curCell->a_p_v_sc;
 }
@@ -155,25 +155,25 @@ void calcScalarTransfer(Data2D& data){
     for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
         if (curCell->bType_sc == INNERCELL) {
-            curCell->sc = (1/curCell->a_p_sc) * (curCell->b_sc + curCell->a_w_sc * curCell->neighCells[WEST]->sc + curCell->a_e_sc * curCell->neighCells[EAST]->sc + curCell->a_n_sc * curCell->neighCells[NORTH]->sc + curCell->a_s_sc * curCell->neighCells[SOUTH]->sc);
+            curCell->alpha = (1/curCell->a_p_sc) * (curCell->b_sc + curCell->a_w_sc * curCell->neighCells[WEST]->sc + curCell->a_e_sc * curCell->neighCells[EAST]->sc + curCell->a_n_sc * curCell->neighCells[NORTH]->sc + curCell->a_s_sc * curCell->neighCells[SOUTH]->sc);
         } else if (curCell->bType_sc == DIRICHLET || curCell->bType_sc == SOLID) {
-            curCell->sc = curCell->sc;
+            curCell->alpha = curCell->alpha;
         } 
     }
     for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
         if (curCell->bType_sc == NEUMANN) {
             if (curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) {
-                curCell->sc = curCell->neighCells[WEST]->sc;
+                curCell->alpha = curCell->neighCells[WEST]->alpha + curCell->g_sc * curCell->faces[WEST]->dx;
             }
             if (curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) {
-                curCell->sc = curCell->neighCells[EAST]->sc;
+                curCell->sc = curCell->neighCells[EAST]->alpha - curCell->g_sc * curCell->faces[EAST]->dx;
             }
             if (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID) {
-                curCell->sc = curCell->neighCells[SOUTH]->sc;
+                curCell->sc = curCell->neighCells[SOUTH]->alpha + curCell->g_sc * curCell->faces[SOUTH]->dy;
             }
             if (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID) {
-                curCell->sc = curCell->neighCells[NORTH]->sc;
+                curCell->sc = curCell->neighCells[NORTH]->alpha - curCell->g_sc * curCell->faces[NORTH]->dy;
             }
         }
     }

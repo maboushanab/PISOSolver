@@ -62,7 +62,9 @@ scalar_down
 
 ########################################
 #           Velocity Field
-######################################## 
+########################################
+# For Dirichlet: u = ?, v = ?
+# For Neumann: du/dx = ?, dv/dy = ?
 
 
 # Boundary Conditions

@@ -88,6 +88,9 @@ struct Face2D {
     double v[5];                 // velocity
     double u_prev;               // u(t-1)
     double v_prev;               // v(t-1)
+
+    double g_u = 0;           // neumann gradient in x-direction
+    double g_v = 0;           // neumann gradient in y-direction
 };
 
 struct Cell2D {
@@ -101,6 +104,7 @@ struct Cell2D {
     double x;              //cell center x-coordinate
     double y;              //cell center y-coordinate
 
+    double alpha_ghost;     //ghost alpha in case of boundary cell
     double alpha;           //phase fraction
     double alpha_prev;      //alpha(t-1)
 
@@ -108,7 +112,7 @@ struct Cell2D {
     double interfaceDistance; //interface distance from cell center
 
     // numeric quantities
-    int     bType_sc;         // scalar boundary type
+    int     bType_sc;         // scalar boundary type (alpha)
     int     bType_p;   	       // pressure boundary type
 
     // physical quantities
@@ -138,6 +142,8 @@ struct Cell2D {
     double a_s_sc;
     double b_sc;
 
+    double g_p = 0;             // pressure gradient
+    double g_sc = 0;            // scalar gradient
 
 };
 
