@@ -2,6 +2,94 @@
 #include "data.h"
 
 /**
+ * Calculates the normal vector and magnitude of the normal vector using a 2x2 stencil for corner cells and a 3x3 stencil for edge cells.
+ * The normal vector is calculated using the formula:
+ * 
+ * @param data The 2D data set.
+ * @param cellId The ID of the cell for which to calculate the normal vector.
+ * @param pos The position of the cell in the grid.
+ */
+void calcAlphaNormalVectorBoundary(Data2D& data, int cellId, CellPosition pos){
+    Cell2D *curCell = &data.cells[cellId];
+    double nx, ny;
+    double dx = curCell->faces[NORTH]->dx;
+    double dy = curCell->faces[WEST]->dy; 
+    switch(pos) {
+        case CellPosition::LeftEdge:
+            Cell2D *a = curCell->neighCells[NORTH];
+            Cell2D *b = curCell->neighCells[NORTH]->neighCells[EAST];
+            Cell2D *c = curCell;
+            Cell2D *d = curCell->neighCells[WEST];
+            Cell2D *e = curCell->neighCells[SOUTH];
+            Cell2D *f = curCell->neighCells[SOUTH]->neighCells[EAST];
+            nx = (c->alpha - d->alpha) / dx;
+            ny = (e->alpha - a->alpha) / (2 * dy);
+            break;
+        case CellPosition::RightEdge:
+            Cell2D *a = curCell->neighCells[NORTH]->neighCells[WEST];
+            Cell2D *b = curCell->neighCells[NORTH];
+            Cell2D *c = curCell->neighCells[EAST];
+            Cell2D *d = curCell;
+            Cell2D *e = curCell->neighCells[SOUTH]->neighCells[WEST];
+            Cell2D *f = curCell->neighCells[SOUTH];
+            nx = (d->alpha - c->alpha) / dx;
+            ny = (f->alpha - b->alpha) / (2 * dy);
+            break;
+        case CellPosition::TopEdge:
+            Cell2D *a = curCell->neighCells[WEST];
+            Cell2D *b = curCell;
+            Cell2D *c = curCell->neighCells[EAST];
+            Cell2D *d = curCell->neighCells[WEST]->neighCells[SOUTH];
+            Cell2D *e = curCell->neighCells[SOUTH];
+            Cell2D *f = curCell->neighCells[SOUTH]->neighCells[EAST];
+            nx = (c->alpha - a->alpha) / (2 * dx);
+            ny = (b->alpha - e->alpha) / dy;
+            break;
+        case CellPosition::BottomEdge:
+            Cell2D *a = curCell->neighCells[WEST]->neighCells[NORTH];
+            Cell2D *b = curCell->neighCells[NORTH];
+            Cell2D *c = curCell->neighCells[EAST]->neighCells[NORTH];
+            Cell2D *d = curCell->neighCells[WEST];
+            Cell2D *e = curCell;
+            Cell2D *f = curCell->neighCells[EAST];
+            nx = (f->alpha - d->alpha) / (2 * dx);
+            ny = (e->alpha - b->alpha) / dy;
+            break;
+        case CellPosition::TopLeft:
+            Cell2D *a = curCell;
+            Cell2D *b = curCell->neighCells[EAST];
+            Cell2D *c = curCell->neighCells[SOUTH];
+            nx = (b->alpha - a->alpha) / dx;
+            ny = (c->alpha - a->alpha) / dy;
+            break;
+        case CellPosition::TopRight:
+            Cell2D *a = curCell->neighCells[WEST];
+            Cell2D *b = curCell;
+            Cell2D *d = curCell->neighCells[SOUTH];
+            nx = (b->alpha - a->alpha) / dx;
+            ny = (d->alpha - a->alpha) / dy;
+            break;
+        case CellPosition::BottomLeft:
+            Cell2D *a = curCell->neighCells[NORTH];
+            Cell2D *c = curCell;
+            Cell2D *d = curCell->neighCells[EAST];
+            nx = (d->alpha - c->alpha) / dx;
+            ny = (c->alpha - a->alpha) / dy;   
+            break;
+        case CellPosition::BottomRight:
+            Cell2D *b = curCell->neighCells[NORTH];
+            Cell2D *c = curCell->neighCells[WEST];
+            Cell2D *d = curCell;
+            nx = (d->alpha - c->alpha) / dx;
+            ny = (d->alpha - b->alpha) / dy;
+            break;
+    }
+    double mag = sqrt(nx*nx + ny*ny);
+    curCell->normalVector[0] = nx/mag;
+    curCell->normalVector[1] = ny/mag;
+}
+
+/**
  * Calculates the normal vector and magnitude of the normal vector using the Mixed Youngs-Centered Method using a 3x3 stencil.
  * The normal vector is calculated using the formula:
  * nx_C = (alpha_E - alpha_W) / (2 * dx)
@@ -14,7 +102,7 @@
  * @param data The 2D data set.
  * @param cellId The ID of the cell for which to calculate the normal vector.
  */
-void calcAlphaNormalVector(Data2D& data, int cellId){
+void calcAlphaNormalVector3x3(Data2D& data, int cellId){
     Cell2D *curCell = &data.cells[cellId];
     double nx_C = 0;
     double ny_C = 0;
@@ -224,8 +312,34 @@ void reconstructInterfaceLines(Data2D& data){
     for (int i = 0; i < data.nCells; i++){
         Cell2D *curCell = &data.cells[i];
         if (curCell->alpha > 0 && curCell->alpha < 1){
-            calcAlphaNormalVector(data, i);
-            estimateInterfaceLine(data, i);
+            if (curCell->bType_sc == INNERCELL){
+                calcAlphaNormalVector3x3(data, i);
+                estimateInterfaceLine(data, i);
+            } else if (curCell->id == 0){               //Top Left
+                calcAlphaNormalVectorBoundary(data, i, CellPosition::TopLeft);
+                estimateInterfaceLine(data, i);
+            } else if (curCell->id == data.dimX - 1){   //Top Right
+                calcAlphaNormalVectorBoundary(data, i, CellPosition::TopRight);
+                estimateInterfaceLine(data, i);
+            } else if (curCell->id == data.nCells - data.dimX){ //Bottom Left
+                calcAlphaNormalVectorBoundary(data, i, CellPosition::BottomLeft);
+                estimateInterfaceLine(data, i);
+            } else if (curCell->id == data.nCells - 1){ //Bottom Right
+                calcAlphaNormalVectorBoundary(data, i, CellPosition::BottomRight);
+                estimateInterfaceLine(data, i);
+            } else if (curCell->neighCells[NORTH] == nullptr){ //Top Edge
+                calcAlphaNormalVectorBoundary(data, i, CellPosition::TopEdge);
+                estimateInterfaceLine(data, i);
+            } else if (curCell->neighCells[WEST] == nullptr){ //Left Edge
+                calcAlphaNormalVectorBoundary(data, i, CellPosition::LeftEdge);
+                estimateInterfaceLine(data, i);
+            } else if (curCell->neighCells[EAST] == nullptr){ //Right Edge
+                calcAlphaNormalVectorBoundary(data, i, CellPosition::RightEdge);
+                estimateInterfaceLine(data, i);
+            } else if ( curCell->neighCells[SOUTH] == nullptr){ //Bottom Edge
+                calcAlphaNormalVectorBoundary(data, i, CellPosition::BottomEdge);
+                estimateInterfaceLine(data, i);
+            } 
         }
     }
 }

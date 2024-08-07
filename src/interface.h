@@ -3,7 +3,7 @@
 
 #include "data.h"
 
-void calcAlphaNormalVector(Data2D& data, int cellId);
+void calcAlphaNormalVector3x3(Data2D& data, int cellId);
 void initInterface(Data2D& data, int cellId);
 double x(double y, double m, double n);
 double y(double x, double m, double n);

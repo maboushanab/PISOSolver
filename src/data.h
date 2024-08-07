@@ -51,6 +51,7 @@ typedef Eigen::VectorXd Vector;
 #define INTERMEDIATE_2 3
 #define CORRECTED_2 4
 
+enum class CellPosition { LeftEdge, RightEdge, TopEdge, BottomEdge, TopLeft, TopRight, BottomLeft, BottomRight };
 
 struct Point2D {
     int id;
