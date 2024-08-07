@@ -108,9 +108,7 @@ bool fSetup(Data2D& data){
                     data.cells[i].neighCells[j] = data.cells[i].faces[j]->neighCells[1];
                 }
             } else {
-                Cell2D ghostCell;
-                data.cells[i].neighCells[j] = &ghostCell;
-                ghostCell.alpha = 0;
+                data.cells[i].neighCells[j] = nullptr;
             }
         }
 

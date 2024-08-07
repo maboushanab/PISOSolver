@@ -1,33 +1,6 @@
 #include "interface.h"
 #include "data.h"
 
-void setGhostCells(Data2D& data){
-    for (int i=0; i<data.nCells; i++){
-        Cell2D *curCell = &data.cells[i];
-        if (curCell->bType_sc == DIRICHLET){
-            if (curCell->neighCells[EAST] == nullptr){
-                curCell->alpha_ghost = 2 * curCell->alpha - curCell->neighCells[WEST]->alpha; 
-            } else if (curCell->neighCells[WEST] == nullptr){
-                curCell->alpha_ghost = 2 * curCell->alpha - curCell->neighCells[EAST]->alpha; 
-            } else if (curCell->neighCells[NORTH] == nullptr){
-                curCell->alpha_ghost = 2 * curCell->alpha - curCell->neighCells[SOUTH]->alpha; 
-            } else if (curCell->neighCells[SOUTH] == nullptr){
-                curCell->alpha_ghost = 2 * curCell->alpha - curCell->neighCells[NORTH]->alpha;
-            }
-        } else if (curCell->bType_sc == NEUMANN){
-            if (curCell->neighCells[EAST] == nullptr){
-                curCell->alpha_ghost = curCell->neighCells[WEST]->alpha + 2 * curCell->faces[NORTH]->dy * curCell->g_sc;
-            } else if (curCell->neighCells[WEST] == nullptr){
-                curCell->alpha_ghost = curCell->neighCells[EAST]->alpha - 2 * curCell->faces[NORTH]->dy * curCell->g_sc;
-            } else if (curCell->neighCells[NORTH] == nullptr){
-                curCell->alpha_ghost = curCell->alpha + 2 * curCell->faces[WEST]->dx * curCell->g_sc;
-            } else if (curCell->neighCells[SOUTH] == nullptr){
-                curCell->alpha_ghost = curCell->alpha - 2 * curCell->faces[WEST]->dx * curCell->g_sc;
-            }
-        } 
-    }
-}
-
 /**
  * Calculates the normal vector and magnitude of the normal vector using the Mixed Youngs-Centered Method using a 3x3 stencil.
  * The normal vector is calculated using the formula:
@@ -56,49 +29,8 @@ void calcAlphaNormalVector(Data2D& data, int cellId){
         ny_Y = (1/(8*curCell->faces[WEST]->dy)) 
                     * (curCell->neighCells[NORTH]->neighCells[WEST]->alpha + 2*curCell->neighCells[NORTH]->alpha + curCell->neighCells[NORTH]->neighCells[EAST]->alpha
                     - curCell->neighCells[SOUTH]->neighCells[WEST]->alpha - 2*curCell->neighCells[SOUTH]->alpha - curCell->neighCells[SOUTH]->neighCells[EAST]->alpha);
-                    
-    } else if (curCell->b_sc == DIRICHLET || curCell->bType_sc == NEUMANN){
-        if (curCell->neighCells[EAST] == nullptr){
-            nx_C = (curCell->alpha_ghost - curCell->neighCells[WEST]->alpha) / (2 * curCell->faces[NORTH]->dx);
-            ny_C = (curCell->neighCells[NORTH]->alpha - curCell->neighCells[SOUTH]->alpha) / (2 *curCell->faces[WEST]->dy); 
-            nx_Y = (1/(8*curCell->faces[NORTH]->dx)) 
-                    * (curCell->neighCells[SOUTH]->neighCells[WEST]->alpha + 2*curCell->neighCells[WEST]->alpha + curCell->neighCells[NORTH]->neighCells[WEST]->alpha
-                    - curCell->neighCells[SOUTH]->alpha_ghost - 2*curCell->alpha_ghost - curCell->neighCells[NORTH]->alpha_ghost);
-            ny_Y = (1/(8*curCell->faces[WEST]->dy))
-                    * (curCell->neighCells[NORTH]->neighCells[WEST]->alpha + 2*curCell->neighCells[NORTH]->alpha + curCell->neighCells[NORTH]->alpha_ghost
-                    - curCell->neighCells[SOUTH]->neighCells[WEST]->alpha - 2*curCell->neighCells[SOUTH]->alpha - curCell->neighCells[SOUTH]->alpha_ghost);
-
-        } else if (curCell->neighCells[WEST] == nullptr){
-            nx_C = (curCell->neighCells[EAST]->alpha - curCell->alpha_ghost) / (2 * curCell->faces[NORTH]->dx);
-            ny_C = (curCell->neighCells[NORTH]->alpha - curCell->neighCells[SOUTH]->alpha) / (2 *curCell->faces[WEST]->dy); 
-            nx_Y = (1/(8*curCell->faces[NORTH]->dx)) 
-                    * (curCell->neighCells[SOUTH]->alpha_ghost + 2*curCell->alpha_ghost + curCell->neighCells[NORTH]->alpha_ghost
-                    - curCell->neighCells[SOUTH]->neighCells[EAST]->alpha - 2*curCell->neighCells[EAST]->alpha - curCell->neighCells[NORTH]->neighCells[EAST]->alpha);
-            ny_Y = (1/(8*curCell->faces[WEST]->dy))
-                    * (curCell->neighCells[NORTH]->neighCells[EAST]->alpha + 2*curCell->neighCells[NORTH]->alpha + curCell->neighCells[NORTH]->alpha_ghost
-                    - curCell->neighCells[SOUTH]->neighCells[EAST]->alpha - 2*curCell->neighCells[SOUTH]->alpha - curCell->neighCells[SOUTH]->alpha_ghost);
-
-        } else if (curCell->neighCells[NORTH] == nullptr){
-            nx_C = (curCell->neighCells[EAST]->alpha - curCell->neighCells[WEST]->alpha) / (2 * curCell->faces[NORTH]->dx);
-            ny_C = (curCell->alpha_ghost - curCell->neighCells[SOUTH]->alpha) / (2 *curCell->faces[WEST]->dy); 
-            nx_Y = (1/(8*curCell->faces[NORTH]->dx)) 
-                    * (curCell->neighCells[SOUTH]->neighCells[WEST]->alpha + 2*curCell->neighCells[WEST]->alpha + curCell->neighCells[WEST]->alpha_ghost
-                    - curCell->neighCells[SOUTH]->neighCells[EAST]->alpha - 2*curCell->neighCells[EAST]->alpha - curCell->neighCells[EAST]->alpha_ghost);
-            ny_Y = (1/(8*curCell->faces[WEST]->dy))
-                    * (curCell->neighCells[WEST]->alpha_ghost + 2*curCell->alpha_ghost + curCell->neighCells[EAST]->alpha_ghost
-                    - curCell->neighCells[SOUTH]->neighCells[WEST]->alpha - 2*curCell->neighCells[SOUTH]->alpha - curCell->neighCells[SOUTH]->neighCells[EAST]->alpha);
-
-        } else if (curCell->neighCells[SOUTH] == nullptr){
-            nx_C = (curCell->neighCells[EAST]->alpha - curCell->neighCells[WEST]->alpha) / (2 * curCell->faces[NORTH]->dx);
-            ny_C = (curCell->neighCells[NORTH]->alpha - curCell->alpha_ghost) / (2 *curCell->faces[WEST]->dy); 
-            nx_Y = (1/(8*curCell->faces[NORTH]->dx)) 
-                    * (curCell->neighCells[WEST]->alpha_ghost + 2*curCell->neighCells[WEST]->alpha + curCell->neighCells[NORTH]->neighCells[WEST]->alpha
-                    - curCell->neighCells[EAST]->alpha_ghost - 2*curCell->neighCells[EAST]->alpha - curCell->neighCells[NORTH]->neighCells[EAST]->alpha);
-            ny_Y = (1/(8*curCell->faces[WEST]->dy))
-                    * (curCell->neighCells[NORTH]->neighCells[WEST]->alpha + 2*curCell->neighCells[NORTH]->alpha + curCell->neighCells[NORTH]->neighCells[EAST]->alpha
-                    - curCell->neighCells[WEST]->alpha_ghost - 2*curCell->alpha_ghost - curCell->neighCells[EAST]->alpha_ghost);
-        }
     }
+
 
     double nx = (nx_C + nx_Y)/2;
     double ny = (ny_C + ny_Y)/2;

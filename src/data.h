@@ -104,7 +104,6 @@ struct Cell2D {
     double x;              //cell center x-coordinate
     double y;              //cell center y-coordinate
 
-    double alpha_ghost;     //ghost alpha in case of boundary cell
     double alpha;           //phase fraction
     double alpha_prev;      //alpha(t-1)
 
