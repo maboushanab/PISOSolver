@@ -147,7 +147,6 @@ bool fSetup(Data2D& data){
         data.cells[i].vol = data.cells[i].faces[0]->dx * data.cells[i].faces[2]->dy;
         data.cells[i].x = data.cells[i].faces[2]->x;
         data.cells[i].y = data.cells[i].faces[0]->y;
-        data.cells[i].alpha = 1;
     }
 
     return true;

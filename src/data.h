@@ -61,6 +61,11 @@ struct Point2D {
     double y; 
 };
 
+struct Line2D {
+    double m;
+    double n;
+};
+
 struct Face2D {
     int id;
     
@@ -184,9 +189,6 @@ struct Data2D {
     std::stack <std::stack<double>> stackOfContinuityResiduals; //stack of continuity residuals
 };
 
-struct Line2D {
-    double m;
-    double n;
-};
+
 
 #endif

@@ -45,13 +45,13 @@ void cellsConstPressure(std::vector<std::string>& CellProp, int xDim, int yDim, 
                         double top_p, double bottom_sc, double bottom_p) {
     int cellIndex = 0;
     for (int i = 0; i < (xDim - 1) * (yDim - 1); i++) {
-        if (i >= (xDim - 1) * (yDim - 1) - xDim + 1) {
+        if (cellIndex >= (xDim - 1) * (yDim - 1) - xDim + 1) {
             CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_sc) + " " + std::to_string(top_p) + " " + std::to_string(pressure));
-        } else if (i < xDim - 1) {
+        } else if (cellIndex < xDim - 1) {
             CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(pressure));
-        } else if (i % (xDim - 1) == xDim - 2) {
+        } else if (cellIndex % (xDim - 1) == xDim - 2) {
             CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_sc) + " " + std::to_string(right_p) + " " + std::to_string(pressure));
-        } else if (i % (xDim - 1) == 0) {
+        } else if (cellIndex % (xDim - 1) == 0) {
             CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(left_sc) + " " + std::to_string(left_p) + " " + std::to_string(pressure));
         } else {
             CellProp.push_back(std::to_string(cellIndex) + " 0 0 " + std::to_string(pressure));
@@ -68,14 +68,14 @@ void cellsPressureGradient_y(std::vector<std::string>& cellProp, int xDim, int y
     for (int i = 0; i < yDim - 1; i++) {
         double p_y = pressure_up + i * p_grad_y;
         for(int j = 0; j < xDim - 1; j++){
-            if (i >= (xDim - 1) * (yDim - 1) - xDim + 1) {
+            if (cellIndex >= (xDim - 1) * (yDim - 1) - xDim + 1) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_sc) + " " + std::to_string(top_p) + " " + std::to_string(p_y));
-            } else if (i < xDim - 1) {
+            } else if (cellIndex < xDim - 1) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(p_y));
-            } else if (i % (xDim - 1) == xDim - 2) {
+            } else if (cellIndex % (xDim - 1) == xDim - 2) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_sc) + " " + std::to_string(right_p) + " " + std::to_string(p_y));
 
-            } else if (i % (xDim - 1) == 0) {
+            } else if (cellIndex % (xDim - 1) == 0) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(left_sc) + " " + std::to_string(left_p) + " " + std::to_string(p_y));
 
             } else {
@@ -95,13 +95,13 @@ void cellsPressureGradient_x(std::vector<std::string>& cellProp, int xDim, int y
     for (int i = 0; i < yDim - 1; i++) {
         double p_x = pressure_left;
         for(int j = 0; j < xDim - 1; j++){
-            if (i >= (xDim - 1) * (yDim - 1) - xDim + 1) {
+            if (cellIndex >= (xDim - 1) * (yDim - 1) - xDim + 1) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_sc) + " " + std::to_string(top_p) + " " + std::to_string(p_x));
-            } else if (i < xDim - 1) {
+            } else if (cellIndex < (xDim - 1)) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(p_x));
-            } else if (i % (xDim - 1) == xDim - 2) {
+            } else if (cellIndex % (xDim - 1) == xDim - 2) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_sc) + " " + std::to_string(right_p) + " " + std::to_string(p_x));
-            } else if (i % (xDim - 1) == 0) {
+            } else if (cellIndex % (xDim - 1) == 0) {
                 cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(left_sc) + " " + std::to_string(left_p) + " " + std::to_string(p_x));
             } else {
                 cellProp.push_back(std::to_string(cellIndex) + " 0 0 " + std::to_string(p_x));

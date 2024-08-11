@@ -14,72 +14,73 @@ void calcAlphaNormalVectorBoundary(Data2D& data, int cellId, CellPosition pos){
     double nx, ny;
     double dx = curCell->faces[NORTH]->dx;
     double dy = curCell->faces[WEST]->dy; 
+    Cell2D *a, *b, *c, *d, *e, *f;
     switch(pos) {
         case CellPosition::LeftEdge:
-            Cell2D *a = curCell->neighCells[NORTH];
-            Cell2D *b = curCell->neighCells[NORTH]->neighCells[EAST];
-            Cell2D *c = curCell;
-            Cell2D *d = curCell->neighCells[WEST];
-            Cell2D *e = curCell->neighCells[SOUTH];
-            Cell2D *f = curCell->neighCells[SOUTH]->neighCells[EAST];
+            a = curCell->neighCells[NORTH];
+            b = curCell->neighCells[NORTH]->neighCells[EAST];
+            c = curCell;
+            d = curCell->neighCells[EAST];
+            e = curCell->neighCells[SOUTH];
+            f = curCell->neighCells[SOUTH]->neighCells[EAST];
             nx = (c->alpha - d->alpha) / dx;
             ny = (e->alpha - a->alpha) / (2 * dy);
             break;
         case CellPosition::RightEdge:
-            Cell2D *a = curCell->neighCells[NORTH]->neighCells[WEST];
-            Cell2D *b = curCell->neighCells[NORTH];
-            Cell2D *c = curCell->neighCells[EAST];
-            Cell2D *d = curCell;
-            Cell2D *e = curCell->neighCells[SOUTH]->neighCells[WEST];
-            Cell2D *f = curCell->neighCells[SOUTH];
+            a = curCell->neighCells[NORTH]->neighCells[WEST];
+            b = curCell->neighCells[NORTH];
+            c = curCell->neighCells[WEST];
+            d = curCell;
+            e = curCell->neighCells[SOUTH]->neighCells[WEST];
+            f = curCell->neighCells[SOUTH];
             nx = (d->alpha - c->alpha) / dx;
             ny = (f->alpha - b->alpha) / (2 * dy);
             break;
         case CellPosition::TopEdge:
-            Cell2D *a = curCell->neighCells[WEST];
-            Cell2D *b = curCell;
-            Cell2D *c = curCell->neighCells[EAST];
-            Cell2D *d = curCell->neighCells[WEST]->neighCells[SOUTH];
-            Cell2D *e = curCell->neighCells[SOUTH];
-            Cell2D *f = curCell->neighCells[SOUTH]->neighCells[EAST];
+            a = curCell->neighCells[WEST];
+            b = curCell;
+            c = curCell->neighCells[EAST];
+            d = curCell->neighCells[WEST]->neighCells[SOUTH];
+            e = curCell->neighCells[SOUTH];
+            f = curCell->neighCells[SOUTH]->neighCells[EAST];
             nx = (c->alpha - a->alpha) / (2 * dx);
             ny = (b->alpha - e->alpha) / dy;
             break;
         case CellPosition::BottomEdge:
-            Cell2D *a = curCell->neighCells[WEST]->neighCells[NORTH];
-            Cell2D *b = curCell->neighCells[NORTH];
-            Cell2D *c = curCell->neighCells[EAST]->neighCells[NORTH];
-            Cell2D *d = curCell->neighCells[WEST];
-            Cell2D *e = curCell;
-            Cell2D *f = curCell->neighCells[EAST];
+            a = curCell->neighCells[WEST]->neighCells[NORTH];
+            b = curCell->neighCells[NORTH];
+            c = curCell->neighCells[EAST]->neighCells[NORTH];
+            d = curCell->neighCells[WEST];
+            e = curCell;
+            f = curCell->neighCells[EAST];
             nx = (f->alpha - d->alpha) / (2 * dx);
             ny = (e->alpha - b->alpha) / dy;
             break;
         case CellPosition::TopLeft:
-            Cell2D *a = curCell;
-            Cell2D *b = curCell->neighCells[EAST];
-            Cell2D *c = curCell->neighCells[SOUTH];
+            a = curCell;
+            b = curCell->neighCells[EAST];
+            c = curCell->neighCells[SOUTH];
             nx = (b->alpha - a->alpha) / dx;
             ny = (c->alpha - a->alpha) / dy;
             break;
         case CellPosition::TopRight:
-            Cell2D *a = curCell->neighCells[WEST];
-            Cell2D *b = curCell;
-            Cell2D *d = curCell->neighCells[SOUTH];
+            a = curCell->neighCells[WEST];
+            b = curCell;
+            d = curCell->neighCells[SOUTH];
             nx = (b->alpha - a->alpha) / dx;
             ny = (d->alpha - a->alpha) / dy;
             break;
         case CellPosition::BottomLeft:
-            Cell2D *a = curCell->neighCells[NORTH];
-            Cell2D *c = curCell;
-            Cell2D *d = curCell->neighCells[EAST];
+            a = curCell->neighCells[NORTH];
+            c = curCell;
+            d = curCell->neighCells[EAST];
             nx = (d->alpha - c->alpha) / dx;
             ny = (c->alpha - a->alpha) / dy;   
             break;
         case CellPosition::BottomRight:
-            Cell2D *b = curCell->neighCells[NORTH];
-            Cell2D *c = curCell->neighCells[WEST];
-            Cell2D *d = curCell;
+            b = curCell->neighCells[NORTH];
+            c = curCell->neighCells[WEST];
+            d = curCell;
             nx = (d->alpha - c->alpha) / dx;
             ny = (d->alpha - b->alpha) / dy;
             break;
@@ -104,22 +105,14 @@ void calcAlphaNormalVectorBoundary(Data2D& data, int cellId, CellPosition pos){
  */
 void calcAlphaNormalVector3x3(Data2D& data, int cellId){
     Cell2D *curCell = &data.cells[cellId];
-    double nx_C = 0;
-    double ny_C = 0;
-    double nx_Y = 0;
-    double ny_Y = 0;
-    if (curCell->b_sc == INNERCELL){
-        nx_C = (curCell->neighCells[EAST]->alpha - curCell->neighCells[WEST]->alpha) / (2 * curCell->faces[NORTH]->dx);
-        ny_C = (curCell->neighCells[NORTH]->alpha - curCell->neighCells[SOUTH]->alpha) / (2 *curCell->faces[WEST]->dy);
-        nx_Y = (1/(8*curCell->faces[NORTH]->dx)) 
+    double nx_C = (curCell->neighCells[EAST]->alpha - curCell->neighCells[WEST]->alpha) / (2 * curCell->faces[NORTH]->dx);
+    double ny_C = (curCell->neighCells[NORTH]->alpha - curCell->neighCells[SOUTH]->alpha) / (2 *curCell->faces[WEST]->dy);
+    double nx_Y = (1/(8*curCell->faces[NORTH]->dx)) 
                     * (curCell->neighCells[SOUTH]->neighCells[EAST]->alpha + 2*curCell->neighCells[EAST]->alpha + curCell->neighCells[NORTH]->neighCells[EAST]->alpha
                     - curCell->neighCells[SOUTH]->neighCells[WEST]->alpha - 2*curCell->neighCells[WEST]->alpha - curCell->neighCells[NORTH]->neighCells[WEST]->alpha);
-        ny_Y = (1/(8*curCell->faces[WEST]->dy)) 
+    double ny_Y = (1/(8*curCell->faces[WEST]->dy)) 
                     * (curCell->neighCells[NORTH]->neighCells[WEST]->alpha + 2*curCell->neighCells[NORTH]->alpha + curCell->neighCells[NORTH]->neighCells[EAST]->alpha
                     - curCell->neighCells[SOUTH]->neighCells[WEST]->alpha - 2*curCell->neighCells[SOUTH]->alpha - curCell->neighCells[SOUTH]->neighCells[EAST]->alpha);
-    }
-
-
     double nx = (nx_C + nx_Y)/2;
     double ny = (ny_C + ny_Y)/2;
     double mag = sqrt(nx*nx + ny*ny);
@@ -165,6 +158,125 @@ double y(double x, double m, double n){
     return m*x + n;
 }
 
+void determinePolygon(Data2D& data, int cellId, std::vector<Eigen::Vector2d>& polygon, double m, double n){
+    Cell2D *curCell = &data.cells[cellId];
+    double dx = curCell->faces[NORTH]->dx;
+    double dy = curCell->faces[WEST]->dy;
+    std::vector<Eigen::Vector2d> cell = {
+        Eigen::Vector2d(-dx/2, dy/2),
+        Eigen::Vector2d(dx/2, dy/2),
+        Eigen::Vector2d(dx/2, -dy/2),
+        Eigen::Vector2d(-dx/2, -dy/2)
+    }; 
+    Eigen::Vector2d vertex;
+    std::vector<Eigen::Vector2d> intersectionPoints;
+    std::vector<Eigen::Vector2d> polygon1;
+    std::vector<Eigen::Vector2d> polygon2;
+    if (x(dy/2, m, n) > -dx/2 && x(dy/2, m, n) < dx/2) { // top face
+        vertex(0) = x(dy/2, m, n);
+        vertex(1) = dy/2;
+        intersectionPoints.push_back(vertex);
+    }
+    if (y(dx/2, m, n) > -dy/2 && y(dx/2, m, n) < dy/2) { // right face
+        vertex(0) = dx/2;
+        vertex(1) = y(dx/2, m, n);
+        intersectionPoints.push_back(vertex);
+    }
+    if (x(-dy/2, m, n) > -dx/2 && x(-dy/2, m, n) < dx/2) { // bottom face
+        vertex(0) = x(-dy/2, m, n);
+        vertex(1) = -dy/2;
+        intersectionPoints.push_back(vertex);
+    }
+    if (y(-dx/2, m, n) > -dy/2 && y(-dx/2, m, n) < dy/2) { // left face
+        vertex(0) = -dx/2;
+        vertex(1) = y(-dx/2, m, n);
+        intersectionPoints.push_back(vertex);
+    }
+
+    if (intersectionPoints[1](0) == dx/2){
+        polygon1.push_back(cell[2]);
+        cell.erase(cell.begin() + 2);
+        if (intersectionPoints[0](0) == -dx/2){
+            // break;
+        } else {
+            polygon1.push_back(cell[2]);
+            cell.erase(cell.begin() + 2);
+            if (intersectionPoints[0](0) == -dx/2){
+                // break;
+            } else {
+                polygon1.push_back(cell[0]);
+                cell.erase(cell.begin());
+            }
+        }
+    } else if (intersectionPoints[1](1) == -dy/2){
+        polygon1.push_back(cell[3]);
+        cell.erase(cell.begin() + 3);
+        if (intersectionPoints[0](0) == -dx/2){
+            // break;
+        } else {
+            polygon1.push_back(cell[0]);
+            cell.erase(cell.begin());
+            if (intersectionPoints[0](1) == dy/2){
+                // break;
+            } else {
+                polygon1.push_back(cell[0]);
+                cell.erase(cell.begin());
+            }
+        }
+    } else if (intersectionPoints[1](0) == -dx/2){
+        polygon1.push_back(cell[0]);
+        cell.erase(cell.begin());
+        if (intersectionPoints[0](1) == dy/2){
+            // break;
+        } else {
+            polygon1.push_back(cell[0]);
+            cell.erase(cell.begin());
+            if (intersectionPoints[0](0) == dx/2){
+                // break;
+            } else {
+                polygon1.push_back(cell[0]);
+                cell.erase(cell.begin());
+            }
+        }
+    } else if (intersectionPoints[1](1) == dy/2){
+        polygon1.push_back(cell[1]);
+        cell.erase(cell.begin() + 1);
+        if (intersectionPoints[0](0) == dx/2){
+            // break;
+        } else {
+            polygon1.push_back(cell[1]);
+            cell.erase(cell.begin() + 1);
+            if (intersectionPoints[0](1) == -dy/2){
+                // break;
+            } else {
+                polygon1.push_back(cell[1]);
+                cell.erase(cell.begin() + 1);
+            }
+        }
+    }
+    polygon1.push_back(intersectionPoints[0]);
+    polygon1.push_back(intersectionPoints[1]);
+
+    for (int i = 0; i < cell.size(); i++){
+        polygon2.push_back(cell[i]);
+    }
+    polygon2.push_back(intersectionPoints[1]);
+    polygon2.push_back(intersectionPoints[0]);
+
+    Eigen::Vector2d edgeVec = intersectionPoints[1] - intersectionPoints[0];
+    Eigen::Vector2d normalVec = {curCell->normalVector[0], curCell->normalVector[1]};
+    double dotProduct = edgeVec.dot(normalVec);
+    if (dotProduct < 0){
+        polygon = polygon2;
+    } else {
+        polygon = polygon1;
+    }
+}
+
+    
+
+        
+
 /**
  * Calculates the alpha prediction for a given cell in a 2D data set.
  * The alpha prediction is calculated by finding the area of the cell that is above the interface line. (Goldman Area of Planar Polygons)
@@ -183,44 +295,52 @@ double calcAlphaPrediction(Data2D& data, int cellId, double m, double n){
     Cell2D *curCell = &data.cells[cellId];
     double dx = curCell->faces[NORTH]->dx;
     double dy = curCell->faces[WEST]->dy;
+    // std::stack<Eigen::Vector2d> vertices;
+    // Eigen::Vector2d vertex;
+    // vertex(0) = -dx/2;
+    // vertex(1) = dy/2;
+    // vertices.push(vertex);
+    // if (x(dy/2, m, n) > -dx/2 && x(dy/2, m, n) < dx/2){ // top face 
+    //     vertex(0) = x(dy/2, m, n);
+    //     vertex(1) = dy/2;
+    //     vertices.push(vertex);
+    // }
+    // vertex(0) = dx/2;
+    // vertex(1) = dy/2;
+    // vertices.push(vertex);
+    // if (y(dx/2, m, n) > -dy/2 && y(dx/2, m, n) < dy/2){ // right face
+    //     vertex(0) = dx/2;
+    //     vertex(1) = y(dx/2, m, n);
+    //     vertices.push(vertex);
+    // }
+    // vertex(0) = dx/2;
+    // vertex(1) = -dy/2;
+    // vertices.push(vertex);
+    // if (x(-dy/2, m, n) > -dx/2 && x(-dy/2, m, n) < dx/2){ // bottom face
+    //     vertex(0) = x(-dy/2, m, n);
+    //     vertex(1) = -dy/2;
+    //     vertices.push(vertex);
+    // }
+    // vertex(0) = -dx/2;
+    // vertex(1) = -dy/2;
+    // vertices.push(vertex);
+    // if (y(-dx/2, m, n) > -dy/2 && y(-dx/2, m, n) < dy/2){ // left face
+    //     vertex(0) = -dx/2;
+    //     vertex(1) = y(-dx/2, m, n);
+    //     vertices.push(vertex);
+    // }
+    // vertex(0) = -dx/2;
+    // vertex(1) = dy/2;
+    // vertices.push(vertex);
+    std::vector<Eigen::Vector2d> polygon;
+    determinePolygon(data, cellId, polygon, m, n);
     std::stack<Eigen::Vector2d> vertices;
-    Eigen::Vector2d vertex;
-    vertex(0) = -dx/2;
-    vertex(1) = dy/2;
-    vertices.push(vertex);
-    if (x(dy/2, m, n) > -dx/2 && x(dy/2, m, n) < dx/2){ // top face 
-        vertex(0) = x(dy/2, m, n);
-        vertex(1) = dy/2;
-        vertices.push(vertex);
+    //std::cout << std::endl <<  "Polygon size: " << polygon.size() << std::endl ;
+    for (int i = 0; i < polygon.size(); i++){
+        vertices.push(polygon[i]);
+        //std::cout << "Polygon vertex: " << polygon[i](0) << " " << polygon[i](1) << std::endl;
     }
-    vertex(0) = dx/2;
-    vertex(1) = dy/2;
-    vertices.push(vertex);
-    if (y(dx/2, m, n) > -dy/2 && y(dx/2, m, n) < dy/2){ // right face
-        vertex(0) = dx/2;
-        vertex(1) = y(dx/2, m, n);
-        vertices.push(vertex);
-    }
-    vertex(0) = dx/2;
-    vertex(1) = -dy/2;
-    vertices.push(vertex);
-    if (x(-dy/2, m, n) > -dx/2 && x(-dy/2, m, n) < dx/2){ // bottom face
-        vertex(0) = x(-dy/2, m, n);
-        vertex(1) = -dy/2;
-        vertices.push(vertex);
-    }
-    vertex(0) = -dx/2;
-    vertex(1) = -dy/2;
-    vertices.push(vertex);
-    if (y(-dx/2, m, n) > -dy/2 && y(-dx/2, m, n) < dy/2){ // left face
-        vertex(0) = -dx/2;
-        vertex(1) = y(-dx/2, m, n);
-        vertices.push(vertex);
-    }
-    vertex(0) = -dx/2;
-    vertex(1) = dy/2;
-    vertices.push(vertex);
-
+    vertices.push(polygon[0]);
     //Goldman Area of Planar Polygons
     double area = 0;
     Eigen::Vector2d vertex1;
@@ -230,6 +350,7 @@ double calcAlphaPrediction(Data2D& data, int cellId, double m, double n){
         vertices.pop();
         vertex2 = vertices.top();
         area += vertex1(0)*vertex2(1) - vertex2(0)*vertex1(1);
+        area = abs(area)/2;
     }
     return area/(dx*dy);
 }
@@ -275,10 +396,10 @@ void estimateInterfaceLine(Data2D& data, int cellId){
     double alphaPrediction = calcAlphaPrediction(data, cellId, m, n);
     double alpha = curCell->alpha;
     double alphaDiff = alphaPrediction - alpha;
-    double maxIter = 0;
-    double minUpdate = 1e-8; // Convergence criteria
-    double gamma = 0.01; // Step size
-    while (abs(alphaDiff) > 1e-6 && maxIter < 100){
+    double i = 0;
+    double minUpdate = 1e-12; // Convergence criteria
+    double gamma = 0.1; // Step size
+    while (abs(alphaDiff) > 1e-6 && i < 10000){
         double sensitivity = calcAlphaSensitivity(data, cellId, m, n, alphaPrediction);
         double nUpdate = alphaDiff * sensitivity * gamma;
         n = n - nUpdate;
@@ -289,7 +410,7 @@ void estimateInterfaceLine(Data2D& data, int cellId){
         }
 
         // Adjust gamma if needed
-        if (abs(nUpdate) < 1e-7) {
+        if (abs(nUpdate) < 1e-5) {
             gamma *= 1.1; // Increase step size if changes are too small
         } else if (abs(nUpdate) > 0.1) {
             gamma *= 0.5; // Decrease step size if changes are too large
@@ -297,7 +418,12 @@ void estimateInterfaceLine(Data2D& data, int cellId){
 
         alphaPrediction = calcAlphaPrediction(data, cellId, m, n);
         alphaDiff = alphaPrediction - alpha;
-        maxIter++;
+        i++;
+    }
+    if (i == 10000){
+        std::cout << "Failed to converge for cell " << cellId << std::endl;
+    } else {
+        std::cout << "Converged for cell " << cellId << " in " << i << " iterations and alphaDiff: " << alphaDiff << std::endl;
     }
     curCell->interfaceLine.n = n;
 }
@@ -315,16 +441,17 @@ void reconstructInterfaceLines(Data2D& data){
             if (curCell->bType_sc == INNERCELL){
                 calcAlphaNormalVector3x3(data, i);
                 estimateInterfaceLine(data, i);
-            } else if (curCell->id == 0){               //Top Left
-                calcAlphaNormalVectorBoundary(data, i, CellPosition::TopLeft);
-                estimateInterfaceLine(data, i);
-            } else if (curCell->id == data.dimX - 1){   //Top Right
-                calcAlphaNormalVectorBoundary(data, i, CellPosition::TopRight);
-                estimateInterfaceLine(data, i);
-            } else if (curCell->id == data.nCells - data.dimX){ //Bottom Left
+                calcAlphaPrediction(data, i, curCell->interfaceLine.m, curCell->interfaceLine.n);
+            } else if (curCell->id == 0){               //Bottom Left
                 calcAlphaNormalVectorBoundary(data, i, CellPosition::BottomLeft);
                 estimateInterfaceLine(data, i);
-            } else if (curCell->id == data.nCells - 1){ //Bottom Right
+            } else if (curCell->id == data.dimX - 1){   //Bottom Right
+                calcAlphaNormalVectorBoundary(data, i, CellPosition::BottomRight);
+                estimateInterfaceLine(data, i);
+            } else if (curCell->id == data.nCells - (data.dimX - 1)){ //Top Left
+                calcAlphaNormalVectorBoundary(data, i, CellPosition::BottomLeft);
+                estimateInterfaceLine(data, i);
+            } else if (curCell->id == data.nCells - 1){ //Top Right
                 calcAlphaNormalVectorBoundary(data, i, CellPosition::BottomRight);
                 estimateInterfaceLine(data, i);
             } else if (curCell->neighCells[NORTH] == nullptr){ //Top Edge
@@ -340,6 +467,8 @@ void reconstructInterfaceLines(Data2D& data){
                 calcAlphaNormalVectorBoundary(data, i, CellPosition::BottomEdge);
                 estimateInterfaceLine(data, i);
             } 
+            
+            std::cout << "Cell " << i << " alpha: " << curCell->alpha << " alpha prediction: " << calcAlphaPrediction(data, i, curCell->interfaceLine.m, curCell->interfaceLine.n) << std::endl;
         }
     }
 }
