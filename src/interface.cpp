@@ -256,20 +256,29 @@ void determinePolygon(Data2D& data, int cellId, std::vector<Eigen::Vector2d>& po
     }
     polygon1.push_back(intersectionPoints[0]);
     polygon1.push_back(intersectionPoints[1]);
-
+        
     for (int i = 0; i < cell.size(); i++){
         polygon2.push_back(cell[i]);
     }
     polygon2.push_back(intersectionPoints[1]);
     polygon2.push_back(intersectionPoints[0]);
 
+    if (intersectionPoints[1] == Eigen::Vector2d(dx/2, dy/2) || intersectionPoints[1] == Eigen::Vector2d(-dx/2, dy/2) || intersectionPoints[1] == Eigen::Vector2d(-dx/2, -dy/2) || intersectionPoints[1] == Eigen::Vector2d(dx/2, -dy/2)){
+        polygon1.erase(polygon1.end() - 1);
+        polygon2.erase(polygon2.end() - 2);
+    }
+    if (intersectionPoints[0] == Eigen::Vector2d(dx/2, dy/2) || intersectionPoints[0] == Eigen::Vector2d(-dx/2, dy/2) || intersectionPoints[0] == Eigen::Vector2d(-dx/2, -dy/2) || intersectionPoints[0] == Eigen::Vector2d(dx/2, -dy/2)){
+        polygon1.erase(polygon1.end() - 2);
+        polygon2.erase(polygon2.end() - 1);
+    }
+
     Eigen::Vector2d edgeVec = intersectionPoints[1] - intersectionPoints[0];
     Eigen::Vector2d normalVec = {curCell->normalVector[0], curCell->normalVector[1]};
-    double dotProduct = edgeVec.dot(normalVec);
-    if (dotProduct < 0){
+    double crossProduct = edgeVec.x()*normalVec.y() - edgeVec.y()*normalVec.x();
+    if (crossProduct < 0){
         polygon = polygon2;
     } else {
-        polygon = polygon1;
+        polygon = polygon2;
     }
 }
 
@@ -291,68 +300,49 @@ void determinePolygon(Data2D& data, int cellId, std::vector<Eigen::Vector2d>& po
  * @param n The y-intercept of the line.
  * @return The volume fraction prediction for the specified cell.
  */
-double calcAlphaPrediction(Data2D& data, int cellId, double m, double n){
+double calcAlphaPrediction(Data2D& data, int cellId, double m, double n, bool print){
     Cell2D *curCell = &data.cells[cellId];
     double dx = curCell->faces[NORTH]->dx;
     double dy = curCell->faces[WEST]->dy;
-    // std::stack<Eigen::Vector2d> vertices;
-    // Eigen::Vector2d vertex;
-    // vertex(0) = -dx/2;
-    // vertex(1) = dy/2;
-    // vertices.push(vertex);
-    // if (x(dy/2, m, n) > -dx/2 && x(dy/2, m, n) < dx/2){ // top face 
-    //     vertex(0) = x(dy/2, m, n);
-    //     vertex(1) = dy/2;
-    //     vertices.push(vertex);
-    // }
-    // vertex(0) = dx/2;
-    // vertex(1) = dy/2;
-    // vertices.push(vertex);
-    // if (y(dx/2, m, n) > -dy/2 && y(dx/2, m, n) < dy/2){ // right face
-    //     vertex(0) = dx/2;
-    //     vertex(1) = y(dx/2, m, n);
-    //     vertices.push(vertex);
-    // }
-    // vertex(0) = dx/2;
-    // vertex(1) = -dy/2;
-    // vertices.push(vertex);
-    // if (x(-dy/2, m, n) > -dx/2 && x(-dy/2, m, n) < dx/2){ // bottom face
-    //     vertex(0) = x(-dy/2, m, n);
-    //     vertex(1) = -dy/2;
-    //     vertices.push(vertex);
-    // }
-    // vertex(0) = -dx/2;
-    // vertex(1) = -dy/2;
-    // vertices.push(vertex);
-    // if (y(-dx/2, m, n) > -dy/2 && y(-dx/2, m, n) < dy/2){ // left face
-    //     vertex(0) = -dx/2;
-    //     vertex(1) = y(-dx/2, m, n);
-    //     vertices.push(vertex);
-    // }
-    // vertex(0) = -dx/2;
-    // vertex(1) = dy/2;
-    // vertices.push(vertex);
     std::vector<Eigen::Vector2d> polygon;
     determinePolygon(data, cellId, polygon, m, n);
     std::stack<Eigen::Vector2d> vertices;
-    //std::cout << std::endl <<  "Polygon size: " << polygon.size() << std::endl ;
+    if (print){
+        std::cout << "Polygon size: " << polygon.size() << " with n: " << n << std::endl;
+    }
     for (int i = 0; i < polygon.size(); i++){
         vertices.push(polygon[i]);
-        //std::cout << "Polygon vertex: " << polygon[i](0) << " " << polygon[i](1) << std::endl;
+        if (print){
+            std::cout << "Polygon vertex: " << polygon[i](0) << " " << polygon[i](1) << std::endl;
+        }
     }
-    vertices.push(polygon[0]);
     //Goldman Area of Planar Polygons
     double area = 0;
-    Eigen::Vector2d vertex1;
-    Eigen::Vector2d vertex2;
-    while (vertices.size() > 1){
-        vertex1 = vertices.top();
-        vertices.pop();
-        vertex2 = vertices.top();
-        area += vertex1(0)*vertex2(1) - vertex2(0)*vertex1(1);
-        area = abs(area)/2;
+    if (polygon.size() == 3){
+        Eigen::Vector2d vertex1 = polygon[0];
+        Eigen::Vector2d vertex2 = polygon[1];
+        Eigen::Vector2d vertex3 = polygon[2];
+        area = (vertex1(0)*vertex2(1) - vertex2(0)*vertex1(1) + vertex2(0)*vertex3(1) - vertex3(0)*vertex2(1) + vertex3(0)*vertex1(1) - vertex1(0)*vertex3(1))/2;
+    } else if (polygon.size() == 4){
+        Eigen::Vector2d vertex1 = polygon[0];
+        Eigen::Vector2d vertex2 = polygon[1];
+        Eigen::Vector2d vertex3 = polygon[2];
+        Eigen::Vector2d vertex4 = polygon[3];
+        area = (vertex1(0)*vertex2(1) - vertex2(0)*vertex1(1) + vertex2(0)*vertex3(1) - vertex3(0)*vertex2(1) + vertex3(0)*vertex4(1) - vertex4(0)*vertex3(1) + vertex4(0)*vertex1(1) - vertex1(0)*vertex4(1))/2;
+    } else if (polygon.size() == 5){
+        Eigen::Vector2d vertex1 = polygon[0];
+        Eigen::Vector2d vertex2 = polygon[1];
+        Eigen::Vector2d vertex3 = polygon[2];
+        Eigen::Vector2d vertex4 = polygon[3];
+        Eigen::Vector2d vertex5 = polygon[4];
+        area = (vertex1(0)*vertex2(1) - vertex2(0)*vertex1(1) + vertex2(0)*vertex3(1) - vertex3(0)*vertex2(1) + vertex3(0)*vertex4(1) - vertex4(0)*vertex3(1) + vertex4(0)*vertex5(1) - vertex5(0)*vertex4(1) + vertex5(0)*vertex1(1) - vertex1(0)*vertex5(1))/2;
     }
-    return area/(dx*dy);
+    // for (int i = 0; i < polygon.size(); i++){
+    //     area += (polygon[i](0)*polygon[(i+1)](1) - polygon[(i+1)](0)*polygon[i](1));
+    // }
+    // area += (polygon[polygon.size()-1](0)*polygon[0](1) - polygon[0](0)*polygon[polygon.size()-1](1));
+        
+    return abs(area)/2*(dx*dy);
 }
 
 /**
@@ -369,7 +359,7 @@ double calcAlphaPrediction(Data2D& data, int cellId, double m, double n){
  */
 double calcAlphaSensitivity(Data2D& data, int cellId, double m, double n, double alpha){
     double deltaN = 1e-6; // Small perturbation
-    double alphaPerturbed = calcAlphaPrediction(data, cellId, m, n + deltaN); // Perturb n
+    double alphaPerturbed = calcAlphaPrediction(data, cellId, m, n + deltaN, false); // Perturb n
     return (alphaPerturbed - alpha) / deltaN; // Sensitivity
 }
 
@@ -393,16 +383,22 @@ void estimateInterfaceLine(Data2D& data, int cellId){
     double m = curCell->interfaceLine.m;
     double n = curCell->interfaceLine.n;
 
-    double alphaPrediction = calcAlphaPrediction(data, cellId, m, n);
+    double alphaPrediction = calcAlphaPrediction(data, cellId, m, n, false);
     double alpha = curCell->alpha;
     double alphaDiff = alphaPrediction - alpha;
-    double i = 0;
-    double minUpdate = 1e-12; // Convergence criteria
-    double gamma = 0.1; // Step size
+    int i = 0;
+    double minUpdate = 1e-6; // Convergence criteria
+    double gamma = 0.01; // Step size
     while (abs(alphaDiff) > 1e-6 && i < 10000){
         double sensitivity = calcAlphaSensitivity(data, cellId, m, n, alphaPrediction);
         double nUpdate = alphaDiff * sensitivity * gamma;
         n = n - nUpdate;
+
+        if (abs(n) > dy/2){ // out of bounds check
+            n = dy/2 - 2e-6;
+        } else if (n < -dy/2){
+            n = -dy/2 + 2e-6;
+        }
 
         // Convergence check based on update magnitude
         if (abs(nUpdate) < minUpdate) {
@@ -413,11 +409,14 @@ void estimateInterfaceLine(Data2D& data, int cellId){
         if (abs(nUpdate) < 1e-5) {
             gamma *= 1.1; // Increase step size if changes are too small
         } else if (abs(nUpdate) > 0.1) {
-            gamma *= 0.5; // Decrease step size if changes are too large
+            gamma *= 0.9; // Decrease step size if changes are too large
         }
 
-        alphaPrediction = calcAlphaPrediction(data, cellId, m, n);
+        alphaPrediction = calcAlphaPrediction(data, cellId, m, n, false);
         alphaDiff = alphaPrediction - alpha;
+        // if (i % 100 == 0){
+        //     std::cout << "Iteration: " << i << " alphaDiff: " << alphaDiff << std::endl;
+        // }
         i++;
     }
     if (i == 10000){
@@ -425,6 +424,7 @@ void estimateInterfaceLine(Data2D& data, int cellId){
     } else {
         std::cout << "Converged for cell " << cellId << " in " << i << " iterations and alphaDiff: " << alphaDiff << std::endl;
     }
+    calcAlphaPrediction(data, cellId, m, n, true);
     curCell->interfaceLine.n = n;
 }
 
@@ -441,7 +441,7 @@ void reconstructInterfaceLines(Data2D& data){
             if (curCell->bType_sc == INNERCELL){
                 calcAlphaNormalVector3x3(data, i);
                 estimateInterfaceLine(data, i);
-                calcAlphaPrediction(data, i, curCell->interfaceLine.m, curCell->interfaceLine.n);
+                calcAlphaPrediction(data, i, curCell->interfaceLine.m, curCell->interfaceLine.n, false);
             } else if (curCell->id == 0){               //Bottom Left
                 calcAlphaNormalVectorBoundary(data, i, CellPosition::BottomLeft);
                 estimateInterfaceLine(data, i);
@@ -468,7 +468,7 @@ void reconstructInterfaceLines(Data2D& data){
                 estimateInterfaceLine(data, i);
             } 
             
-            std::cout << "Cell " << i << " alpha: " << curCell->alpha << " alpha prediction: " << calcAlphaPrediction(data, i, curCell->interfaceLine.m, curCell->interfaceLine.n) << std::endl;
+            std::cout << "Cell " << i << " alpha: " << curCell->alpha << " alpha prediction: " << calcAlphaPrediction(data, i, curCell->interfaceLine.m, curCell->interfaceLine.n, false) << std::endl;
         }
     }
 }
