@@ -62,14 +62,16 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
         if (data.cells[p].bType_p == DIRICHLET || data.cells[p].bType_p == INNERCELL){
             data.cells[p].p[INITIAL] = numbers[i+3];
         } else if (data.cells[p].bType_p == NEUMANN){
-            data.cells[p].p[INITIAL] = 0;
-            data.cells[p].g_p = numbers[i+3];
+            data.cells[p].p[INITIAL] = numbers[i+3];
+            // data.cells[p].g_p = numbers[i+3];
+            data.cells[p].g_p = 0;
         }
         if (data.cells[p].bType_sc == DIRICHLET || data.cells[p].bType_sc == INNERCELL){
             data.cells[p].alpha = numbers[i+4];
         } else if (data.cells[p].bType_sc == NEUMANN){
-            data.cells[p].alpha = 0;
-            data.cells[p].g_sc = numbers[i+4];
+            data.cells[p].alpha = numbers[i+4];
+            // data.cells[p].g_sc = numbers[i+4];
+            data.cells[p].g_sc = 0;
         }
         // std::cout << "Cell " << data.cells[p].id << ": alpha = " << data.cells[p].alpha << ", bType_sc = " << data.cells[p].bType_sc << ", bType_p = " << data.cells[p].bType_p << ", sc = " << data.cells[p].sc << ", p = " << data.cells[p].p[INITIAL] << std::endl;
         p++;

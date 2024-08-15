@@ -278,7 +278,7 @@ void determinePolygon(Data2D& data, int cellId, std::vector<Eigen::Vector2d>& po
     if (crossProduct < 0){
         polygon = polygon2;
     } else {
-        polygon = polygon2;
+        polygon = polygon1;
     }
 }
 
