@@ -84,10 +84,12 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
             data.faces[p].u[INITIAL] = numbers[i+2];
             data.faces[p].v[INITIAL] = numbers[i+3];
         } else if (data.faces[p].bType_u == NEUMANN){
-            data.faces[p].u[INITIAL] = 0;
-            data.faces[p].v[INITIAL] = 0;
-            data.faces[p].g_u = numbers[i+2];
-            data.faces[p].g_v = numbers[i+3];
+            data.faces[p].u[INITIAL] = numbers[i+2];
+            data.faces[p].v[INITIAL] = numbers[i+3];
+            // data.faces[p].g_u = numbers[i+2];
+            // data.faces[p].g_v = numbers[i+3];
+            data.faces[p].g_u = 0;
+            data.faces[p].g_v = 0;
         }
         // std::cout << "Face " << data.faces[p].id << ": bType_u = " << data.faces[p].bType_u << ", u = " << data.faces[p].u[INITIAL] << ", v = " << data.faces[p].v[INITIAL] << std::endl;
          p++;
@@ -127,7 +129,8 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
     data.mode = numbers_setup[3];
     data.pecFunc = numbers_setup[4];
     data.velSolver = numbers_setup[5];
-    data.presSolver = numbers_setup[6];
+    data.fixedPressure = numbers_setup[6];
+    data.presSolver = numbers_setup[7];
     std::cout << "maxTime: " << data.maxTime << std::endl;
     std::cout << "dt: " << data.dt << std::endl;
     if (data.dt == 0) {
@@ -144,10 +147,10 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
         return 1;
     }
     data.timeStep = 0;
-    data.rho1 = numbers_setup[7];
-    data.eta1 = numbers_setup[8];
-    data.rho2 = numbers_setup[9];
-    data.eta2 = numbers_setup[10];
+    data.rho1 = numbers_setup[8];
+    data.eta1 = numbers_setup[9];
+    data.rho2 = numbers_setup[10];
+    data.eta2 = numbers_setup[11];
 
     return 0;
 }

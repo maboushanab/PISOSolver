@@ -25,6 +25,11 @@
 # EXPLICIT == 3
 0
 
+# Fixed Pressure
+# false == 0
+# true == 1
+0
+
 # Pressure Solver
 # BiCGStab == 0
 # SparseLU == 1

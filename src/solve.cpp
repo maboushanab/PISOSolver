@@ -39,7 +39,7 @@ std::string fSolve(Data2D& data) {
 
 void iterateSteady(Data2D& data, int iteration){
     predictVelocityField(data);
-
+    
     correctPressureEquation(data, INTERMEDIATE_1);
     corrector1(data);
 
@@ -179,7 +179,7 @@ void calcScalarTransfer(Data2D& data){
     }
 }
 
-double continutyResidual(Data2D& data, int cellId){
+double continutyResidual(Data2D& data, int cellId, int step){
     Cell2D *curCell = &data.cells[cellId];
     double rho_e;
     double rho_w;
@@ -208,10 +208,10 @@ double continutyResidual(Data2D& data, int cellId){
         rho_s = 0.5 * (fRho(data, curCell->neighCells[SOUTH]->alpha) + fRho(data, curCell->alpha));
     }
  
-    double flux_e = rho_e * curCell->faces[EAST]->u[CORRECTED_2] * curCell->faces[EAST]->dy;
-    double flux_w = rho_w * curCell->faces[WEST]->u[CORRECTED_2] * curCell->faces[WEST]->dy;
-    double flux_n = rho_n * curCell->faces[NORTH]->v[CORRECTED_2] * curCell->faces[NORTH]->dx;
-    double flux_s = rho_s * curCell->faces[SOUTH]->v[CORRECTED_2] * curCell->faces[SOUTH]->dx;
+    double flux_e = rho_e * curCell->faces[EAST]->u[step] * curCell->faces[EAST]->dy;
+    double flux_w = rho_w * curCell->faces[WEST]->u[step] * curCell->faces[WEST]->dy;
+    double flux_n = rho_n * curCell->faces[NORTH]->v[step] * curCell->faces[NORTH]->dx;
+    double flux_s = rho_s * curCell->faces[SOUTH]->v[step] * curCell->faces[SOUTH]->dx;
     double imbalance = (flux_e - flux_w) + (flux_n - flux_s);
     return imbalance;
 }
@@ -219,7 +219,7 @@ double continutyResidual(Data2D& data, int cellId){
 void checkConvergence(Data2D& data, int iteration){
     double res = 0.0;
     for (int i=0; i < data.nCells; i++){
-        res += continutyResidual(data, i);
+        res += continutyResidual(data, i, CORRECTED_1);
     }
     double rmsRes = sqrt(abs(res)/data.nCells);
     data.continuityResiduals.push(rmsRes);
@@ -246,6 +246,8 @@ void unstaggerGrid(Data2D& data, int step) {
         Cell2D *curCell = &data.cells[i];
         curCell->u[step] = 0.5 * (curCell->faces[EAST]->u[step]+ curCell->faces[WEST]->u[step]);
         curCell->v[step] = 0.5 * (curCell->faces[NORTH]->v[step] + curCell->faces[SOUTH]->v[step]);
+        // curCell->u[step] = curCell->faces[EAST]->u[step];
+        // curCell->v[step] = curCell->faces[NORTH]->v[step];
     }
 }
 

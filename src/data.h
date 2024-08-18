@@ -30,18 +30,18 @@ typedef Eigen::VectorXd Vector;
 
 //Cell Navigation
 
-#define NORTH 0
 #define SOUTH 1
-#define WEST 2
+#define NORTH 0
 #define EAST 3
+#define WEST 2
 
 //Face Navigation
 
-#define UP 0
 #define DOWN 1
+#define UP 0
 
-#define LEFT 0
 #define RIGHT 1
+#define LEFT 0
 
 //PISO Algorithm Steps
 
@@ -97,6 +97,8 @@ struct Face2D {
 
     double g_u = 0;           // neumann gradient in x-direction
     double g_v = 0;           // neumann gradient in y-direction
+
+    double alphaFlux;         // alpha flux
 };
 
 struct Cell2D {
@@ -173,6 +175,7 @@ struct Data2D {
     int pecFunc;                                                //peclet function
     int velSolver;                                              //velocity solver type
     int presSolver;                                             //pressure solver type
+    bool fixedPressure;                                         //fixed pressure
     int mode;                                                   //mode
 
     double alpha_p_relax;                                       //pressure relaxation factor

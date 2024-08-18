@@ -3,9 +3,9 @@ x
 y
 10
 dx
-1
+0.2
 dy
-1
+0.2
 
 ########################################
 #           Pressure Field
@@ -15,11 +15,11 @@ dy
 # type 1=Pressure Gradient in x
 # type 2=Pressure Gradient in y
 pressure_field_type
-1
+0
 
 # Constant Pressure
 pressure
-100
+0
 
 # Pressure Gradient in x
 pressure_left

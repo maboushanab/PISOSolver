@@ -157,7 +157,7 @@ void setMomentumEquationMatrix(Data2D& data, SpMat& momMatrix, Vector& momVector
         Face2D* curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
             momMatrix.insert(i, i) = -curFace->a_p_tilde;
-            momVector(i) = curFace->b;
+            momVector(i) = -curFace->b;
             if (i > 0) {
                 momMatrix.insert(i, i - 1) = curFace->a_w;
             }
@@ -336,11 +336,11 @@ void predictVelocityFieldBiCGStab(Data2D& data) {
         solver.setMaxIterations(10000);
         solver.compute(momMatrix);
         if (solver.info() != Eigen::Success) {
-            throw std::runtime_error("Decomposition failed for uMatrix");
+            throw std::runtime_error("Decomposition failed for momMatrix");
         }
         Vector solution = solver.solve(momVector);
         if (solver.info() != Eigen::Success) {
-            throw std::runtime_error("Solving failed for uMatrix");
+            throw std::runtime_error("Solving failed for momMatrix");
         }
 
         // Update the faces with the solution
