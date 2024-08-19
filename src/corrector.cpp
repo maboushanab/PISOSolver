@@ -125,9 +125,9 @@ void correctPressureEquationBiCGStab(Data2D& data, int step) {
 
     try {
         // Solve for pressure correction
-        Eigen::BiCGSTAB<SpMat> solver;
-        solver.setTolerance(1e-6);
-        solver.setMaxIterations(10000);
+        // with preconditioner
+        Eigen::BiCGSTAB<SpMat, Eigen::IncompleteLUT<double>> solver;
+        
         solver.compute(pressureCorrMatrix);
         if (solver.info() != Eigen::Success) {
             throw std::runtime_error("Decomposition failed for pressureCorrMatrix");
@@ -186,16 +186,6 @@ void correctPressureEquationSparseLU(Data2D& data, int step) {
 }
 
 void correctPressureEquation(Data2D& data, int step) {
-    if (data.fixedPressure){
-        for (int i = 0; i < data.nCells; i++) {
-            Cell2D *curCell = &data.cells[i];
-            if (curCell->bType_p == INNERCELL) {
-                curCell->p[step] = curCell->p[INITIAL];
-            }
-        }
-        std::cout << "Pressure fixed" << std::endl;
-        return;
-    }
     if (data.presSolver == 1) {
         correctPressureEquationSparseLU(data, step);
     } else {

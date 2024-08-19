@@ -29,7 +29,7 @@ void computeScalarCoeff(Data2D& data, int cellId);
 void calcScalarTransfer(Data2D& data);
 
 // Convergence
-double continutyResidual(Data2D& data, int cellId);
+double continutyResidual(Data2D& data, int cellId, int step);
 void checkConvergence(Data2D& data, int iteration);
 // Reset
 void resetData(Data2D& data);
@@ -37,5 +37,6 @@ void assignPrevData(Data2D& data);
 
 // Output
 void unstaggerGrid(Data2D& data, int step);
+void assignVelocities(Data2D& data, int step);
 
 #endif

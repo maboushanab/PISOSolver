@@ -39,14 +39,18 @@ std::string fSolve(Data2D& data) {
 
 void iterateSteady(Data2D& data, int iteration){
     predictVelocityField(data);
-    
-    correctPressureEquation(data, INTERMEDIATE_1);
-    corrector1(data);
+    if (data.fixedPressure)
+    {
+        assignVelocities(data, INTERMEDIATE_1);
+    } else {
+        correctPressureEquation(data, INTERMEDIATE_1);
+        corrector1(data);
 
-    correctPressureEquation(data, INTERMEDIATE_2);
-    corrector2(data);
+        correctPressureEquation(data, INTERMEDIATE_2);
+        corrector2(data);
+    }
 
-    calcScalarTransfer(data);
+    //calcScalarTransfer(data);
     checkConvergence(data, iteration);
 }
 
@@ -289,5 +293,15 @@ void resetData(Data2D& data) {
             curFace->u[INITIAL] = curFace->u[CORRECTED_2];
             curFace->v[INITIAL] = curFace->v[CORRECTED_2];
         }
+    }
+}
+
+void assignVelocities(Data2D& data, int step){
+    for (int i = 0; i < data.nFaces; i++) {
+        data.faces[i].u[CORRECTED_2] = data.faces[i].u[step];
+        data.faces[i].v[CORRECTED_2] = data.faces[i].v[step];
+    }
+    for (int i = 0; i < data.nCells; i++) {
+        data.cells[i].p[CORRECTED_2] = data.cells[i].p[INITIAL];
     }
 }

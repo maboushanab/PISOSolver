@@ -7,7 +7,7 @@
 
 # Mode
 # Transient == 0
-# Steady State (only suitable for single phase flow) == 1
+# Steady State == 1
 1
 
 # Convection Scheme
@@ -16,7 +16,7 @@
 # Central == 2
 # Exponential == 3
 # Hybrid == 4
-0
+2
 
 # Velocity Solver
 # IMPLICIT BiCGStab == 0
@@ -36,7 +36,7 @@
 0
 
 # density1 viscosity1
-0.3 49.15
+1000 49.15
 
 # density2 viscosity2
 0.5 0.2
