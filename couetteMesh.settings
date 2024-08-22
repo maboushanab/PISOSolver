@@ -19,7 +19,7 @@ pressure_field_type
 
 # Constant Pressure
 pressure
-0
+10
 
 # Pressure Gradient in x
 pressure_left
@@ -72,7 +72,7 @@ left_u
 right_u
 0
 top_u
-10
+1
 bottom_u
 0
 

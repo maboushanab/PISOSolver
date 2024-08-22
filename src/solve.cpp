@@ -64,7 +64,7 @@ void iterateTransient(Data2D& data){
     correctPressureEquation(data, INTERMEDIATE_2);
     corrector2(data);
 
-    calcScalarTransfer(data);
+    //calcScalarTransfer(data);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -227,7 +227,8 @@ void checkConvergence(Data2D& data, int iteration){
     }
     double rmsRes = sqrt(abs(res)/data.nCells);
     data.continuityResiduals.push(rmsRes);
-    if (rmsRes > 1e-6 && iteration < data.maxIteration){
+    if (rmsRes > 1e-8 && iteration < data.maxIteration){
+    //if (iteration < data.maxIteration){
         data.stackOfContinuityResiduals.push(data.continuityResiduals);
         iteration++;
         resetData(data);

@@ -30,15 +30,15 @@ typedef Eigen::VectorXd Vector;
 
 //Cell Navigation
 
-#define SOUTH 1
-#define NORTH 0
+#define NORTH 1
+#define SOUTH 0
 #define EAST 3
 #define WEST 2
 
 //Face Navigation
 
-#define DOWN 1
-#define UP 0
+#define UP 1
+#define DOWN 0
 
 #define RIGHT 1
 #define LEFT 0

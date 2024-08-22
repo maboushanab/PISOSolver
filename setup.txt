@@ -3,7 +3,7 @@
 # dt 
 0.001
 # maxIteration
-50
+10
 
 # Mode
 # Transient == 0
@@ -16,7 +16,7 @@
 # Central == 2
 # Exponential == 3
 # Hybrid == 4
-2
+4
 
 # Velocity Solver
 # IMPLICIT BiCGStab == 0
@@ -36,7 +36,7 @@
 0
 
 # density1 viscosity1
-1000 49.15
+1 0.1
 
 # density2 viscosity2
 0.5 0.2

@@ -138,6 +138,7 @@ void computeVelocityCoeff_y(Data2D& data, int faceId) {
     curFace->a_p_v = 0.5 * (fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[DOWN]->alpha)) * dx * dy / dt;
     curFace->a_p_tilde = curFace->a_e + curFace->a_w + curFace->a_n + curFace->a_s;
     curFace->b = (curFace->neighCells[DOWN]->p[INITIAL] - curFace->neighCells[UP]->p[INITIAL]) * dx;
+    // curFace->b += 9.81 * (fRho(data, curFace->neighCells[UP]->alpha) * dx * curFace->neighCells[UP]->faces[WEST]->dy + fRho(data, curFace->neighCells[DOWN]->alpha) * dx * curFace->neighCells[DOWN]->faces[WEST]->dy) / 2;
     if (data.mode == 0){
         curFace->b += curFace->a_p_v * curFace->v_prev;
     }

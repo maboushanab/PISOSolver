@@ -15,7 +15,7 @@ dy
 # type 1=Pressure Gradient in x
 # type 2=Pressure Gradient in y
 pressure_field_type
-1
+0
 
 # Constant Pressure
 pressure
