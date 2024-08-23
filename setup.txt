@@ -16,7 +16,7 @@
 # Central == 2
 # Exponential == 3
 # Hybrid == 4
-0
+4
 
 # Velocity Solver
 # IMPLICIT BiCGStab == 0

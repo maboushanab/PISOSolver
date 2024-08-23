@@ -47,7 +47,7 @@ bool fSetup(Data2D& data){
     int n=0; // column index
     for (int i = 0; i < data.nFaces; i++) {
         if (i < data.nhorizontalFaces) {   // horizontal faces
-            // check if face is on the top boundary
+            // check if face is on the bottom boundary
             if (i < data.dimX - 1) {
                 data.faces[i].neighCells[0] = nullptr;
                 data.faces[i].neighCells[1] = &data.cells[i];
@@ -57,7 +57,7 @@ bool fSetup(Data2D& data){
                 data.faces[i].neighCells[0] = &data.cells[i - (data.dimX - 1)];
                 data.faces[i].neighCells[1] = &data.cells[i];
                 // std::cout << "Face " << data.faces[i].id << " connected to Cell " << data.faces[i].neighCells[0]->id << " and Cell " << data.faces[i].neighCells[1]->id << std::endl;
-            // check if face is on the bottom boundary
+            // check if face is on the top boundary
             } else if (i < (data.dimX - 1) * data.dimY) {
                 data.faces[i].neighCells[0] = &data.cells[i - (data.dimX - 1)];
                 data.faces[i].neighCells[1] = nullptr;

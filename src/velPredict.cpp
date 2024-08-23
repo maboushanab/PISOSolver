@@ -40,19 +40,19 @@ void computeVelocityCoeff_x(Data2D& data, int faceId) {
     double f_w;
 
     if (curFace->neighCells[RIGHT]->neighCells[EAST] == nullptr) {
-        f_e = 0.5 * (fRho(data, curFace->neighCells[RIGHT]->alpha) * u_E + (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->alpha)) / 2 * u); //In case face is one away of the right boundary
+        f_e = fRho(data, curFace->neighCells[RIGHT]->alpha) * u_E * dy; //In case face is one away of the right boundary
     } else {
-        f_e = 0.5 * ((fRho(data, curFace->neighCells[RIGHT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->neighCells[EAST]->alpha)) / 2 * u_E + (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->alpha)) / 2 * u); 
+        f_e = (fRho(data, curFace->neighCells[RIGHT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->neighCells[EAST]->alpha)) / 2 * u_E * dy; 
     }
 
     if (curFace->neighCells[LEFT]->neighCells[WEST] == nullptr) {
-        f_w = 0.5 * ((fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->alpha)) / 2 * u + fRho(data, curFace->neighCells[LEFT]->alpha) / 2 * u_W); //In case face is one away of the left boundary
+        f_w = fRho(data, curFace->neighCells[LEFT]->alpha) * u_W * dy; //In case face is one away of the left boundary
     } else {
-        f_w = 0.5 * ((fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->alpha)) / 2 * u + (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[LEFT]->neighCells[WEST]->alpha)) / 2 * u_W);
+        f_w = (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[LEFT]->neighCells[WEST]->alpha)) / 2 * u_W * dy;
     }
 
-    double g_n = 0.5 * ((fRho(data, curFace->neighCells[RIGHT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->neighCells[NORTH]->alpha)) / 2 * v_N_R + (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[LEFT]->neighCells[NORTH]->alpha)) / 2 * v_N_L);
-    double g_s = 0.5 * ((fRho(data, curFace->neighCells[RIGHT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->neighCells[SOUTH]->alpha)) / 2 * v_S_R + (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[LEFT]->neighCells[SOUTH]->alpha)) / 2 * v_S_L);
+    double g_n = 0.5 * dx * ((fRho(data, curFace->neighCells[RIGHT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->neighCells[NORTH]->alpha)) / 2 * v_N_R + (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[LEFT]->neighCells[NORTH]->alpha)) / 2 * v_N_L);
+    double g_s = 0.5 * dx * ((fRho(data, curFace->neighCells[RIGHT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->neighCells[SOUTH]->alpha)) / 2 * v_S_R + (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[LEFT]->neighCells[SOUTH]->alpha)) / 2 * v_S_L);
 
     // Peclet Number
     double Pe_e = f_e / d_e;
@@ -106,22 +106,22 @@ void computeVelocityCoeff_y(Data2D& data, int faceId) {
     double d_w = (fEta(data, curFace->neighCells[UP]->neighCells[WEST]->alpha) + fEta(data, curFace->neighCells[UP]->alpha) + fEta(data, curFace->neighCells[DOWN]->neighCells[WEST]->alpha) + fEta(data, curFace->neighCells[DOWN]->alpha) ) / (4 * dx);
 
     // Mass Flux Terms
-    double f_e = 0.5 * ((fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[UP]->neighCells[EAST]->alpha)) / 2 * u_E_U + (fRho(data, curFace->neighCells[DOWN]->alpha) + fRho(data, curFace->neighCells[DOWN]->neighCells[EAST]->alpha)) / 2 * u_E_D);
-    double f_w = 0.5 * ((fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[UP]->neighCells[WEST]->alpha)) / 2 * u_W_U + (fRho(data, curFace->neighCells[DOWN]->alpha) + fRho(data, curFace->neighCells[DOWN]->neighCells[WEST]->alpha)) / 2 * u_W_D);
+    double f_e = 0.5 * dy * ((fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[UP]->neighCells[EAST]->alpha)) / 2 * u_E_U + (fRho(data, curFace->neighCells[DOWN]->alpha) + fRho(data, curFace->neighCells[DOWN]->neighCells[EAST]->alpha)) / 2 * u_E_D);
+    double f_w = 0.5 * dy * ((fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[UP]->neighCells[WEST]->alpha)) / 2 * u_W_U + (fRho(data, curFace->neighCells[DOWN]->alpha) + fRho(data, curFace->neighCells[DOWN]->neighCells[WEST]->alpha)) / 2 * u_W_D);
 
     double g_n;
     double g_s;
 
     if (curFace->neighCells[UP]->neighCells[NORTH] == nullptr) {
-        g_n = 0.5 * (fRho(data, curFace->neighCells[UP]->alpha) / 2 * v_N + (fRho(data, curFace->neighCells[DOWN]->alpha) + fRho(data, curFace->neighCells[UP]->alpha)) / 2 * v); //In case face is one away of the top boundary
+        g_n = fRho(data, curFace->neighCells[UP]->alpha) * dx * v_N; //In case face is one away of the top boundary
     } else {
-        g_n = 0.5 * ((fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[UP]->neighCells[NORTH]->alpha)) / 2 * v_N + (fRho(data, curFace->neighCells[DOWN]->alpha) + fRho(data, curFace->neighCells[UP]->alpha)) / 2 * v);
+        g_n = (fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[UP]->neighCells[NORTH]->alpha)) / 2 * v_N * dx;
     }
 
     if (curFace->neighCells[DOWN]->neighCells[SOUTH] == nullptr) {
-        g_s = 0.5 * (fRho(data, curFace->neighCells[DOWN]->alpha) * v + (fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[DOWN]->alpha)) / 2 * v_S); //In case face is one away of the bottom boundary
+        g_s = fRho(data, curFace->neighCells[DOWN]->alpha) * v_S * dx; //In case face is one away of the bottom boundary
     } else {
-        g_s = 0.5 * ((fRho(data, curFace->neighCells[DOWN]->alpha) + fRho(data, curFace->neighCells[DOWN]->neighCells[SOUTH]->alpha)) / 2 * v + (fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[DOWN]->alpha)) / 2 * v_S);
+        g_s = (fRho(data, curFace->neighCells[DOWN]->alpha) + fRho(data, curFace->neighCells[DOWN]->neighCells[SOUTH]->alpha)) / 2 * v_S * dx;
     }
 
     // Peclet Number
