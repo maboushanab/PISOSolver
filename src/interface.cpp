@@ -342,7 +342,7 @@ double calcAlphaPrediction(Data2D& data, int cellId, double m, double n, bool pr
     // }
     // area += (polygon[polygon.size()-1](0)*polygon[0](1) - polygon[0](0)*polygon[polygon.size()-1](1));
         
-    return abs(area)/2*(dx*dy);
+    return abs(area)/(dx*dy);
 }
 
 /**
