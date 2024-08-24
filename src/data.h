@@ -176,6 +176,7 @@ struct Data2D {
     int velSolver;                                              //velocity solver type
     int presSolver;                                             //pressure solver type
     bool fixedPressure;                                         //fixed pressure
+    bool bIsZero;                                               //b vector for the PPE LSE is zero
     int mode;                                                   //mode
 
     double alpha_p_relax;                                       //pressure relaxation factor

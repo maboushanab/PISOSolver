@@ -157,31 +157,31 @@ void setMomentumEquationMatrix(Data2D& data, SpMat& momMatrix, Vector& momVector
     for (int i = 0; i < data.nFaces; i++) {
         Face2D* curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
-            momMatrix.insert(i, i) = -curFace->a_p_tilde;
-            momVector(i) = -curFace->b;
+            momMatrix.insert(i, i) = curFace->a_p_tilde;
+            momVector(i) = curFace->b;
             if (i > 0) {
-                momMatrix.insert(i, i - 1) = curFace->a_w;
+                momMatrix.insert(i, i - 1) = -curFace->a_w;
             }
             if (i < data.nFaces - 1) {
-                momMatrix.insert(i, i + 1) = curFace->a_e;
+                momMatrix.insert(i, i + 1) = -curFace->a_e;
             }
             if (i < data.nhorizontalFaces){
                 if (curFace->neighCells[UP] != nullptr) {
                     int j = curFace->neighCells[UP]->faces[NORTH]->id;
-                    momMatrix.insert(i, j) = curFace->a_n;
+                    momMatrix.insert(i, j) = -curFace->a_n;
                 }
                 if (curFace->neighCells[DOWN] != nullptr) {
                     int j = curFace->neighCells[DOWN]->faces[SOUTH]->id;
-                    momMatrix.insert(i, j) = curFace->a_s;
+                    momMatrix.insert(i, j) = -curFace->a_s;
                 }
             } else {
                 if (curFace->neighCells[LEFT]->neighCells[NORTH] != nullptr) {
                     int j = curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->id;
-                    momMatrix.insert(i, j) = curFace->a_n;
+                    momMatrix.insert(i, j) = -curFace->a_n;
                 }
                 if (curFace->neighCells[RIGHT]->neighCells[SOUTH] != nullptr) {
                     int j = curFace->neighCells[RIGHT]->neighCells[SOUTH]->faces[WEST]->id;
-                    momMatrix.insert(i, j) = curFace->a_s;
+                    momMatrix.insert(i, j) = -curFace->a_s;
                 }
             }
         } else if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID) {

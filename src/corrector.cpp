@@ -18,19 +18,19 @@ void setPressureMatrix(Data2D& data, SpMat& pressureMatrix, Vector& pressureVect
     for (int i = 0; i < nCells; i++) {
         Cell2D curCell = data.cells[i];
         if (curCell.bType_p == INNERCELL) {
-            pressureVector(i) = -curCell.b;
-            pressureMatrix.coeffRef(i, i) = -curCell.a_p;
+            pressureVector(i) = curCell.b;
+            pressureMatrix.coeffRef(i, i) = curCell.a_p;
             if (curCell.neighCells[EAST] != nullptr) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = curCell.a_e;
+                pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = -curCell.a_e;
             }
             if (curCell.neighCells[WEST] != nullptr) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = curCell.a_w;
+                pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = -curCell.a_w;
             }
             if (curCell.neighCells[NORTH] != nullptr) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = curCell.a_n;
+                pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = -curCell.a_n;
             }
             if (curCell.neighCells[SOUTH] != nullptr) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = curCell.a_s;
+                pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = -curCell.a_s;
             }
         } else if (curCell.bType_p == DIRICHLET || curCell.bType_p == SOLID) {
             pressureMatrix.coeffRef(i, i) = 1.0;
@@ -67,19 +67,36 @@ void setPressureMatrix(Data2D& data, SpMat& pressureMatrix, Vector& pressureVect
                 pressureVector(i) = -curCell.g_p*curCell.faces[SOUTH]->dy;
             }
         }
-        
-        // // set a central node in the middle of the grid to dirichlet with p = 0
-        // if (i == std::round(nCells / 2)) {
-        //     for (int j = 0; j < nCells; j++) {
-        //         if (j != i) {
-        //             pressureMatrix.coeffRef(i, j) = 0.0;
-        //         }
-        //     }
-        //     pressureMatrix.coeffRef(i, i) = 1.0;
-        //     pressureVector(i) = 0.0;
-        // }
-
     }
+    // // set corner node of the grid to dirichlet with p = 0
+    // for (int j = 0; j < nCells; j++) {
+    //     if (j != 0) {
+    //         pressureMatrix.coeffRef(0, j) = 0.0;
+    //     }
+    // }
+    // pressureMatrix.coeffRef(0, 0) = 1.0;
+    // pressureVector(0) = 0.0;
+    // // set corner node of the grid to dirichlet with p = 0
+    // for (int j = 0; j < nCells; j++) {
+    //     if (j != data.dimX - 1) {
+    //         pressureMatrix.coeffRef(data.dimX - 1, j) = 0.0;
+    //     }
+    // }
+    // pressureMatrix.coeffRef(data.dimX - 1, data.dimX - 1) = 1.0;
+    // pressureVector(data.dimX - 1) = 0.0;
+
+    // Orthogonalization if the sum of b is not zero 
+    // if (pressureVector.sum() != 0){
+    //     data.bIsZero = false;
+    //     std::cout << "Sum of b: " << pressureVector.sum() << std::endl;
+    //     double bAvg = pressureVector.mean();
+    //     for (int j = 0; j < nCells; j++){
+    //         pressureVector(j) -= bAvg;
+    //     }
+    // } else {
+    //     data.bIsZero = true;
+    //     std::cout << "Sum of b is 0" << std::endl;
+    // }
 }
 
 
@@ -95,21 +112,69 @@ void computePressureCoeff(Data2D& data, int cellId){
     double dx = curCell->faces[SOUTH]->dx;
     double dy = curCell->faces[WEST]->dy;
 
-    curCell->a_e = -(fRho(data, curCell->neighCells[EAST]->alpha) * dy * dy) / curCell->faces[EAST]->a_p_tilde;
-    curCell->a_w = -(fRho(data, curCell->neighCells[WEST]->alpha) * dy * dy) / curCell->faces[WEST]->a_p_tilde;
-    curCell->a_n = -(fRho(data, curCell->neighCells[NORTH]->alpha) * dx * dx) / curCell->faces[NORTH]->a_p_tilde;
-    curCell->a_s = -(fRho(data, curCell->neighCells[SOUTH]->alpha) * dx * dx) / curCell->faces[SOUTH]->a_p_tilde;
+    curCell->a_e = (fRho(data, curCell->neighCells[EAST]->alpha) * dy * dy) / curCell->faces[EAST]->a_p_tilde;
+    curCell->a_w = (fRho(data, curCell->neighCells[WEST]->alpha) * dy * dy) / curCell->faces[WEST]->a_p_tilde;
+    curCell->a_n = (fRho(data, curCell->neighCells[NORTH]->alpha) * dx * dx) / curCell->faces[NORTH]->a_p_tilde;
+    curCell->a_s = (fRho(data, curCell->neighCells[SOUTH]->alpha) * dx * dx) / curCell->faces[SOUTH]->a_p_tilde;
     // curCell->a_e = -dy/(dx*fRho(data, curCell->neighCells[EAST]->alpha));
     // curCell->a_w = -dy/(dx*fRho(data, curCell->neighCells[WEST]->alpha));
     // curCell->a_n = -dx/(dy*fRho(data, curCell->neighCells[NORTH]->alpha));
     // curCell->a_s = -dx/(dy*fRho(data, curCell->neighCells[SOUTH]->alpha));
-    curCell->a_p = -curCell->a_e - curCell->a_w - curCell->a_n - curCell->a_s;
+    curCell->a_p = curCell->a_e + curCell->a_w + curCell->a_n + curCell->a_s;
     curCell->b = - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[EAST]->alpha)) * 0.5 * curCell->faces[EAST]->u[INTERMEDIATE_1] * dy) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[WEST]->alpha)) * 0.5 *curCell->faces[WEST]->u[INTERMEDIATE_1] * dy) 
-    - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[NORTH]->alpha))* 0.5 *curCell->faces[NORTH]->v[INTERMEDIATE_1] * dx) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[SOUTH]->alpha))* 0.5 *curCell->faces[SOUTH]->v[INTERMEDIATE_1] * dx);
-    // curCell->b = (curCell->faces[EAST]->u[INTERMEDIATE_1] - curCell->faces[WEST]->u[INTERMEDIATE_1]) * dy + (curCell->faces[NORTH]->v[INTERMEDIATE_1] - curCell->faces[SOUTH]->v[INTERMEDIATE_1]) * dx;
+    - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[NORTH]->alpha))* 0.5 *curCell->faces[NORTH]->v[INTERMEDIATE_1] * dx) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[SOUTH]->alpha))* 0.5 *curCell->faces[SOUTH]->v[INTERMEDIATE_1] * dx); 
+    // + (fRho(data, curCell->alpha_prev) - fRho(data, curCell->alpha)) * dx * dy / data.dt;
     if (data.mode == 0){
         curCell->b += (fRho(data, curCell->alpha_prev) - fRho(data, curCell->alpha)) * dx * dy / data.dt;
     }
+}
+void computePressureCoeff2(Data2D& data, int cellId){
+    Cell2D *curCell = &data.cells[cellId];
+    double dx = curCell->faces[SOUTH]->dx;
+    double dy = curCell->faces[WEST]->dy;
+
+    // double b_e = (0.5 * (fRho(data, curCell->neighCells[EAST]->alpha) + fRho(data, curCell->alpha)) * dy) / curCell->faces[EAST]->a_p_tilde
+    //             * (curCell->neighCells[EAST]->faces[EAST]->u[CORRECTED_1] * curCell->neighCells[EAST]->faces[EAST]->a_p_tilde
+    //             + curCell->faces[WEST]->u[CORRECTED_1] * curCell->faces[WEST]->a_p_tilde
+    //             + curCell->neighCells[NORTH]->faces[EAST]->u[CORRECTED_1] * curCell->neighCells[NORTH]->faces[EAST]->a_p_tilde
+    //             + curCell->neighCells[SOUTH]->faces[EAST]->u[CORRECTED_1] * curCell->neighCells[SOUTH]->faces[EAST]->a_p_tilde); 
+
+    // double b_w = (0.5 * (fRho(data, curCell->neighCells[WEST]->alpha) + fRho(data, curCell->alpha)) * dy) / curCell->faces[WEST]->a_p_tilde
+    //             * (curCell->faces[EAST]->u[CORRECTED_1] * curCell->faces[EAST]->a_p_tilde
+    //             + curCell->neighCells[WEST]->faces[WEST]->u[CORRECTED_1] * curCell->neighCells[WEST]->faces[WEST]->a_p_tilde
+    //             + curCell->neighCells[NORTH]->faces[WEST]->u[CORRECTED_1] * curCell->neighCells[NORTH]->faces[WEST]->a_p_tilde
+    //             + curCell->neighCells[SOUTH]->faces[WEST]->u[CORRECTED_1] * curCell->neighCells[SOUTH]->faces[WEST]->a_p_tilde);
+
+    // double b_n = (0.5 * (fRho(data, curCell->neighCells[NORTH]->alpha) + fRho(data, curCell->alpha)) * dx) / curCell->faces[NORTH]->a_p_tilde
+    //             * (curCell->neighCells[NORTH]->faces[NORTH]->v[CORRECTED_1] * curCell->neighCells[NORTH]->faces[NORTH]->a_p_tilde
+    //             + curCell->neighCells[WEST]->faces[NORTH]->v[CORRECTED_1] * curCell->neighCells[WEST]->faces[NORTH]->a_p_tilde
+    //             + curCell->neighCells[EAST]->faces[NORTH]->v[CORRECTED_1] * curCell->neighCells[EAST]->faces[NORTH]->a_p_tilde
+    //             + curCell->faces[SOUTH]->v[CORRECTED_1] * curCell->faces[SOUTH]->a_p_tilde);
+
+    // double b_s = (0.5 * (fRho(data, curCell->neighCells[SOUTH]->alpha) + fRho(data, curCell->alpha)) * dx) / curCell->faces[SOUTH]->a_p_tilde
+    //             * (curCell->faces[NORTH]->v[CORRECTED_1] * curCell->faces[NORTH]->a_p_tilde
+    //             + curCell->neighCells[WEST]->faces[SOUTH]->v[CORRECTED_1] * curCell->neighCells[WEST]->faces[SOUTH]->a_p_tilde
+    //             + curCell->neighCells[EAST]->faces[SOUTH]->v[CORRECTED_1] * curCell->neighCells[EAST]->faces[SOUTH]->a_p_tilde
+    //             + curCell->faces[SOUTH]->v[CORRECTED_1] * curCell->faces[SOUTH]->a_p_tilde);
+    
+    // curCell->b = -b_e + b_w - b_n + b_s;
+
+    curCell->b = - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[EAST]->alpha)) * 0.5 * curCell->faces[EAST]->u[CORRECTED_1] * dy) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[WEST]->alpha)) * 0.5 *curCell->faces[WEST]->u[CORRECTED_1] * dy) 
+    - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[NORTH]->alpha))* 0.5 *curCell->faces[NORTH]->v[CORRECTED_1] * dx) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[SOUTH]->alpha))* 0.5 *curCell->faces[SOUTH]->v[CORRECTED_1] * dx);
+    if (data.mode == 0){
+        curCell->b += (fRho(data, curCell->alpha_prev) - fRho(data, curCell->alpha)) * dx * dy / data.dt;
+    }
+    curCell->a_e = (fRho(data, curCell->neighCells[EAST]->alpha) * dy * dy) / curCell->faces[EAST]->a_p_tilde;
+    curCell->a_w = (fRho(data, curCell->neighCells[WEST]->alpha) * dy * dy) / curCell->faces[WEST]->a_p_tilde;
+    curCell->a_n = (fRho(data, curCell->neighCells[NORTH]->alpha) * dx * dx) / curCell->faces[NORTH]->a_p_tilde;
+    curCell->a_s = (fRho(data, curCell->neighCells[SOUTH]->alpha) * dx * dx) / curCell->faces[SOUTH]->a_p_tilde;
+    // curCell->a_e = -dy/(dx*fRho(data, curCell->neighCells[EAST]->alpha));
+    // curCell->a_w = -dy/(dx*fRho(data, curCell->neighCells[WEST]->alpha));
+    // curCell->a_n = -dx/(dy*fRho(data, curCell->neighCells[NORTH]->alpha));
+    // curCell->a_s = -dx/(dy*fRho(data, curCell->neighCells[SOUTH]->alpha));
+    curCell->a_p = curCell->a_e + curCell->a_w + curCell->a_n + curCell->a_s;
+
+    // curCell->b = (curCell->faces[EAST]->u[CORRECTED_1] - curCell->faces[WEST]->u[CORRECTED_1]) / dx + (curCell->faces[NORTH]->v[CORRECTED_1] - curCell->faces[SOUTH]->v[CORRECTED_1]) / dy;
 }
 
 /**
@@ -160,14 +225,25 @@ void correctPressureEquationBiCGStab(Data2D& data, int step) {
         }
         Vector pressureCorrSolution = solver.solve(pressureCorrVector);
         if (solver.info() != Eigen::Success) {
-            throw std::runtime_error("Solving failed for pressureCorrMatrix");
+            throw std::runtime_error("Solving failed for pressureCorrMatrix on corrector step " + std::to_string(step));
         }
-        for (int i = 0; i < data.nCells; i++) {
-            data.cells[i].p[step] = pressureCorrSolution(i);
-        }
+        //Orthogonalization if the sum of b is not zero
+        // if (!data.bIsZero){
+        //     double pAvg = pressureCorrSolution.mean();
+        //     std::cout << "Average pressure correction: " << pAvg << std::endl;
+        //     for (int i = 0; i < data.nCells; i++){
+        //         pressureCorrSolution(i) -= pAvg;
+        //     }
+        // } else {
+        //     std::cout << "b is 0" << std::endl;
+        // }
+        // for (int i = 0; i < data.nCells; i++) {
+        //     data.cells[i].p[step] = pressureCorrSolution(i);
+        // }
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
+
 }
 
 void correctPressureEquationSparseLU(Data2D& data, int step) {
@@ -330,55 +406,6 @@ void corrector1(Data2D& data) {
             }
         }
     }
-}
-
-void computePressureCoeff2(Data2D& data, int cellId){
-    Cell2D *curCell = &data.cells[cellId];
-    double dx = curCell->faces[SOUTH]->dx;
-    double dy = curCell->faces[WEST]->dy;
-
-    // double b_e = (0.5 * (fRho(data, curCell->neighCells[EAST]->alpha) + fRho(data, curCell->alpha)) * dy) / curCell->faces[EAST]->a_p_tilde
-    //             * (curCell->neighCells[EAST]->faces[EAST]->u[CORRECTED_1] * curCell->neighCells[EAST]->faces[EAST]->a_p_tilde
-    //             + curCell->faces[WEST]->u[CORRECTED_1] * curCell->faces[WEST]->a_p_tilde
-    //             + curCell->neighCells[NORTH]->faces[EAST]->u[CORRECTED_1] * curCell->neighCells[NORTH]->faces[EAST]->a_p_tilde
-    //             + curCell->neighCells[SOUTH]->faces[EAST]->u[CORRECTED_1] * curCell->neighCells[SOUTH]->faces[EAST]->a_p_tilde); 
-
-    // double b_w = (0.5 * (fRho(data, curCell->neighCells[WEST]->alpha) + fRho(data, curCell->alpha)) * dy) / curCell->faces[WEST]->a_p_tilde
-    //             * (curCell->faces[EAST]->u[CORRECTED_1] * curCell->faces[EAST]->a_p_tilde
-    //             + curCell->neighCells[WEST]->faces[WEST]->u[CORRECTED_1] * curCell->neighCells[WEST]->faces[WEST]->a_p_tilde
-    //             + curCell->neighCells[NORTH]->faces[WEST]->u[CORRECTED_1] * curCell->neighCells[NORTH]->faces[WEST]->a_p_tilde
-    //             + curCell->neighCells[SOUTH]->faces[WEST]->u[CORRECTED_1] * curCell->neighCells[SOUTH]->faces[WEST]->a_p_tilde);
-
-    // double b_n = (0.5 * (fRho(data, curCell->neighCells[NORTH]->alpha) + fRho(data, curCell->alpha)) * dx) / curCell->faces[NORTH]->a_p_tilde
-    //             * (curCell->neighCells[NORTH]->faces[NORTH]->v[CORRECTED_1] * curCell->neighCells[NORTH]->faces[NORTH]->a_p_tilde
-    //             + curCell->neighCells[WEST]->faces[NORTH]->v[CORRECTED_1] * curCell->neighCells[WEST]->faces[NORTH]->a_p_tilde
-    //             + curCell->neighCells[EAST]->faces[NORTH]->v[CORRECTED_1] * curCell->neighCells[EAST]->faces[NORTH]->a_p_tilde
-    //             + curCell->faces[SOUTH]->v[CORRECTED_1] * curCell->faces[SOUTH]->a_p_tilde);
-
-    // double b_s = (0.5 * (fRho(data, curCell->neighCells[SOUTH]->alpha) + fRho(data, curCell->alpha)) * dx) / curCell->faces[SOUTH]->a_p_tilde
-    //             * (curCell->faces[NORTH]->v[CORRECTED_1] * curCell->faces[NORTH]->a_p_tilde
-    //             + curCell->neighCells[WEST]->faces[SOUTH]->v[CORRECTED_1] * curCell->neighCells[WEST]->faces[SOUTH]->a_p_tilde
-    //             + curCell->neighCells[EAST]->faces[SOUTH]->v[CORRECTED_1] * curCell->neighCells[EAST]->faces[SOUTH]->a_p_tilde
-    //             + curCell->faces[SOUTH]->v[CORRECTED_1] * curCell->faces[SOUTH]->a_p_tilde);
-    
-    // curCell->b = -b_e + b_w - b_n + b_s;
-
-    curCell->b = - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[EAST]->alpha)) * 0.5 * curCell->faces[EAST]->u[CORRECTED_1] * dy) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[WEST]->alpha)) * 0.5 *curCell->faces[WEST]->u[CORRECTED_1] * dy) 
-    - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[NORTH]->alpha))* 0.5 *curCell->faces[NORTH]->v[CORRECTED_1] * dx) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[SOUTH]->alpha))* 0.5 *curCell->faces[SOUTH]->v[CORRECTED_1] * dx);
-    if (data.mode == 0){
-        curCell->b += (fRho(data, curCell->alpha_prev) - fRho(data, curCell->alpha)) * dx * dy / data.dt;
-    }
-    curCell->a_e = -(fRho(data, curCell->neighCells[EAST]->alpha) * dy * dy) / curCell->faces[EAST]->a_p_tilde;
-    curCell->a_w = -(fRho(data, curCell->neighCells[WEST]->alpha) * dy * dy) / curCell->faces[WEST]->a_p_tilde;
-    curCell->a_n = -(fRho(data, curCell->neighCells[NORTH]->alpha) * dx * dx) / curCell->faces[NORTH]->a_p_tilde;
-    curCell->a_s = -(fRho(data, curCell->neighCells[SOUTH]->alpha) * dx * dx) / curCell->faces[SOUTH]->a_p_tilde;
-    // curCell->a_e = -dy/(dx*fRho(data, curCell->neighCells[EAST]->alpha));
-    // curCell->a_w = -dy/(dx*fRho(data, curCell->neighCells[WEST]->alpha));
-    // curCell->a_n = -dx/(dy*fRho(data, curCell->neighCells[NORTH]->alpha));
-    // curCell->a_s = -dx/(dy*fRho(data, curCell->neighCells[SOUTH]->alpha));
-    curCell->a_p = -curCell->a_e - curCell->a_w - curCell->a_n - curCell->a_s;
-
-    // curCell->b = (curCell->faces[EAST]->u[CORRECTED_1] - curCell->faces[WEST]->u[CORRECTED_1]) / dx + (curCell->faces[NORTH]->v[CORRECTED_1] - curCell->faces[SOUTH]->v[CORRECTED_1]) / dy;
 }
 
 void corrector2(Data2D& data){
