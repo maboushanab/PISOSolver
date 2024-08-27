@@ -36,7 +36,7 @@
 0
 
 # density1 viscosity1
-1 0.1
+1 1
 
 # density2 viscosity2
 0.5 0.2

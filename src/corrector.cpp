@@ -68,14 +68,14 @@ void setPressureMatrix(Data2D& data, SpMat& pressureMatrix, Vector& pressureVect
             }
         }
     }
-    // // set corner node of the grid to dirichlet with p = 0
-    // for (int j = 0; j < nCells; j++) {
-    //     if (j != 0) {
-    //         pressureMatrix.coeffRef(0, j) = 0.0;
-    //     }
-    // }
-    // pressureMatrix.coeffRef(0, 0) = 1.0;
-    // pressureVector(0) = 0.0;
+    // set corner node of the grid to dirichlet with p = 1
+    for (int j = 0; j < nCells; j++) {
+        if (j != 0) {
+            pressureMatrix.coeffRef(0, j) = 0.0;
+        }
+    }
+    pressureMatrix.coeffRef(0, 0) = 1.0;
+    pressureVector(0) = 1.0;
     // // set corner node of the grid to dirichlet with p = 0
     // for (int j = 0; j < nCells; j++) {
     //     if (j != data.dimX - 1) {
@@ -210,7 +210,7 @@ void correctPressureEquationBiCGStab(Data2D& data, int step) {
     // std::cout << "Condition number of pressure matrix: " << cond << std::endl;
 
     pressureCorrMatrix.makeCompressed();
-    // //calculate condition number of matrix
+    //calculate condition number of matrix
 
 
     try {
@@ -237,9 +237,9 @@ void correctPressureEquationBiCGStab(Data2D& data, int step) {
         // } else {
         //     std::cout << "b is 0" << std::endl;
         // }
-        // for (int i = 0; i < data.nCells; i++) {
-        //     data.cells[i].p[step] = pressureCorrSolution(i);
-        // }
+        for (int i = 0; i < data.nCells; i++) {
+            data.cells[i].p[step] = pressureCorrSolution(i);
+        }
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
@@ -355,7 +355,8 @@ void corrector1(Data2D& data) {
             curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[EAST]->p[CORRECTED_1] + curCell->neighCells[NORTH]->p[CORRECTED_1]);
         }
     }
-        
+    data.cells[0].p[CORRECTED_1] = 1.0;
+
     // Update Velocities bzw. faces
     for (int i = 0; i < data.nFaces; i++) {
         Face2D *curFace = &data.faces[i];
@@ -406,6 +407,7 @@ void corrector1(Data2D& data) {
             }
         }
     }
+    
 }
 
 void corrector2(Data2D& data){
@@ -456,6 +458,7 @@ void corrector2(Data2D& data){
             curCell->p[CORRECTED_2] = 0.5 * (curCell->neighCells[EAST]->p[CORRECTED_2] + curCell->neighCells[NORTH]->p[CORRECTED_2]);
         }
     }
+    data.cells[0].p[CORRECTED_2] = 1.0; 
     // Update Velocities bzw. faces
     for (int i = 0; i < data.nFaces; i++) {
         Face2D *curFace = &data.faces[i];
@@ -515,7 +518,8 @@ void corrector2(Data2D& data){
                 }
             }
         }
-    }  
+    } 
+    
 }
 
 /*

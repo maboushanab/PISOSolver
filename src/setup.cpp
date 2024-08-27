@@ -37,7 +37,7 @@ bool fSetup(Data2D& data){
         data.cells[l].points[1] = &data.points[i + 1];
         data.cells[l].points[2] = &data.points[i + data.dimX];
         data.cells[l].points[3] = &data.points[i + data.dimX + 1];
-        //data.cells[l].alpha = 1;
+        data.cells[l].alpha = 1;
         // std::cout << "Cell " << data.cells[l].id << ": (" << data.cells[l].points[0]->id << ", " << data.cells[l].points[1]->id << ", " << data.cells[l].points[2]->id << ", " << data.cells[l].points[3]->id << ")" << std::endl;
         l++;
     }

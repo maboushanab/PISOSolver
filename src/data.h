@@ -98,7 +98,6 @@ struct Face2D {
     double g_u = 0;           // neumann gradient in x-direction
     double g_v = 0;           // neumann gradient in y-direction
 
-    double alphaFlux;         // alpha flux
 };
 
 struct Cell2D {
@@ -114,9 +113,10 @@ struct Cell2D {
 
     double alpha;           //phase fraction
     double alpha_prev;      //alpha(t-1)
+    double alphaFlux;       // alpha flux
 
     double normalVector[2]; //normal vector
-    double interfaceDistance; //interface distance from cell center
+    Eigen::Vector2d interfaceMidPoint; //point on the interface line
 
     // numeric quantities
     int     bType_sc;         // scalar boundary type (alpha)

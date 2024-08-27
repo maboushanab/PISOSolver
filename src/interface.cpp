@@ -158,7 +158,7 @@ double y(double x, double m, double n){
     return m*x + n;
 }
 
-void determinePolygon(Data2D& data, int cellId, std::vector<Eigen::Vector2d>& polygon, double m, double n){
+void determinePolygonAsCell(Data2D& data, int cellId, std::vector<Eigen::Vector2d>& polygon, double m, double n){
     Cell2D *curCell = &data.cells[cellId];
     double dx = curCell->faces[NORTH]->dx;
     double dy = curCell->faces[WEST]->dy;
@@ -192,6 +192,8 @@ void determinePolygon(Data2D& data, int cellId, std::vector<Eigen::Vector2d>& po
         vertex(1) = y(-dx/2, m, n);
         intersectionPoints.push_back(vertex);
     }
+
+    curCell->interfaceMidPoint = (intersectionPoints[0] + intersectionPoints[1])/2;
 
     if (intersectionPoints[1](0) == dx/2){
         polygon1.push_back(cell[2]);
@@ -305,7 +307,7 @@ double calcAlphaPrediction(Data2D& data, int cellId, double m, double n, bool pr
     double dx = curCell->faces[NORTH]->dx;
     double dy = curCell->faces[WEST]->dy;
     std::vector<Eigen::Vector2d> polygon;
-    determinePolygon(data, cellId, polygon, m, n);
+    determinePolygonAsCell(data, cellId, polygon, m, n);
     std::stack<Eigen::Vector2d> vertices;
     if (print){
         std::cout << "Polygon size: " << polygon.size() << " with n: " << n << std::endl;
