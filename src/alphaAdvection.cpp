@@ -2,16 +2,36 @@
 #include "data.h"
 #include "interface.h"
 
-std::vector<double> calculateFluxLines(Data2D data, int cellId){
-    std::vector<double> fluxLines;
-    fluxLines.push_back(0);
-    fluxLines.push_back(0);
+double calculateFluxLength(Data2D data, int cellId, std::string direction){
     Cell2D curCell = data.cells[cellId];
-
-    fluxLines[0] = data.dt * (curCell.faces[WEST]->u[CORRECTED_2] + curCell.faces[EAST]->u[CORRECTED_2]);
-    fluxLines[1] = data.dt * (curCell.faces[SOUTH]->v[CORRECTED_2] + curCell.faces[NORTH]->v[CORRECTED_2]);
-
-    return fluxLines;
+    if (direction == "WEST"){
+        if (curCell.faces[WEST]->u < 0){
+            return -(data.dt * curCell.faces[WEST]->u[CORRECTED_2]); 
+        } else {
+            return 0;
+        }
+    } else if (direction == "EAST"){
+        if (curCell.faces[EAST]->u > 0){
+            return data.dt * curCell.faces[EAST]->u[CORRECTED_2];
+        } else {
+            return 0;
+        }
+    } else if (direction == "SOUTH"){
+        if (curCell.faces[SOUTH]->v < 0){
+            return -(data.dt * curCell.faces[SOUTH]->v[CORRECTED_2]);
+        } else {
+            return 0;
+        }
+    } else if (direction == "NORTH"){
+        if (curCell.faces[NORTH]->v > 0){
+            return data.dt * curCell.faces[NORTH]->v[CORRECTED_2];
+        } else {
+            return 0;
+        }
+    } else {
+        std::cerr << "Invalid direction" << std::endl;
+        return 0;
+    }
 }
 
 void calculatePolygonArea(double n, double m, Eigen::Vector2d normalVec, Eigen::Vector2d p1, Eigen::Vector2d p2, Eigen::Vector2d p3, Eigen::Vector2d p4, std::vector<Eigen::Vector2d>& polygon, bool& isIntersecting){
@@ -153,12 +173,12 @@ double shoeLaceFormula(std::vector<Eigen::Vector2d> polygon){
     return area;
 }
 
-bool isSectionInsideAlpha(Eigen::Vector2d p, Eigen::Vector2d interfaceMidPoint, Eigen::Vector2d normalVec, bool isX){
+bool isSectionInsideAlpha(double p, Eigen::Vector2d interfaceMidPoint, Eigen::Vector2d normalVec, std::string direction){
     double s = 0;
-    if (isX == true){
-        s = (p(0) - interfaceMidPoint(0))/normalVec(0);
+    if (direction == "WEST" || direction == "EAST"){
+        s = (p - interfaceMidPoint(0))/normalVec(0);
     } else {
-        s = (p(1) - interfaceMidPoint(1))/normalVec(1);
+        s = (p - interfaceMidPoint(1))/normalVec(1);
     }
     if (s > 0){
         return true;
@@ -167,441 +187,72 @@ bool isSectionInsideAlpha(Eigen::Vector2d p, Eigen::Vector2d interfaceMidPoint, 
     }
 }
 
-void advectalphaface(Data2D data, int cellId){
+
+double interfaceFlux(Data2D& data, int cellId, std::string direction){
     Cell2D curCell = data.cells[cellId];
     double dx = curCell.faces[WEST]->dy;
     double dy = curCell.faces[SOUTH]->dx;
-    std::vector<double> fluxLines = calculateFluxLines(data, cellId);
 
-    // Calculate the intersection points of the flux lines with the cell edges
-    // x-Line
-    double xLine = 0;
-    if (fluxLines[0] < 0){
-        // x-Line
-        xLine = -(dx/2) + (std::abs(fluxLines[0]));
-    } else if (fluxLines[0] > 0){
-        // x-Line
-        xLine = (dx/2) - (std::abs(fluxLines[0]));
-    } else {
-        xLine = 0;
+    double fluxLength = calculateFluxLength(data, cellId, direction);
+
+    if (fluxLength == 0){
+        return 0.0;
     }
 
-    // y-Line
-    double yLine = 0;
-    if(fluxLines[1] < 0){
-        // y-Line
-        yLine = -(dy/2) + (std::abs(fluxLines[1]));
-    } else if (fluxLines[1] > 0){
-        // y-Line
-        yLine = (dy/2) - (std::abs(fluxLines[1]));
-    } else {
-        yLine = 0;
-    }
-
-
-    // std::vector<std::vector<Eigen::Vector2d>> polygons;
-    // Determine the alpha sections
-    Vector normalVec = {curCell.normalVector[0], curCell.normalVector[1]};
+    double fluxPoint = 0;
+    Eigen::Vector2d InterNormal = {curCell.normalVector[0], curCell.normalVector[1]};
     bool isIntersecting = false;
     double m = curCell.interfaceLine.m;
-    double n = curCell.interfaceLine.n;               
-    if (xLine == 0){
-        // y-line cuts the cell
-        if (fluxLines[1] < 0){
-            // y-flux is negative => calculate bottom alpha value
-            Eigen::Vector2d p1 = {-dx/2, yLine};
-            Eigen::Vector2d p2 = {dx/2, yLine};
-            Eigen::Vector2d p3 = {dx/2, -dy/2};
-            Eigen::Vector2d p4 = {-dx/2, -dy/2};
-            std::vector<Eigen::Vector2d> polygon;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygon, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygon);
-                double totalArea = dx*dy;
-                curCell.neighCells[SOUTH]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, false);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[SOUTH]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-        } else if (fluxLines[1] > 0){
-            // y-flux is positive => calculate top alpha value
-            Eigen::Vector2d p1 = {-dx/2, dy/2};
-            Eigen::Vector2d p2 = {dx/2, dy/2};
-            Eigen::Vector2d p3 = {dx/2, yLine};
-            Eigen::Vector2d p4 = {-dx/2, yLine};
-            std::vector<Eigen::Vector2d> polygon;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygon, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygon);
-                double totalArea = dx*dy;
-                curCell.neighCells[NORTH]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, false);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[NORTH]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-        }       
-    } else if (yLine == 0){
-        // x-line cuts the cell
-        if (fluxLines[0] < 0){
-            // x-flux is negative => calculate left alpha value
-            Eigen::Vector2d p1 = {-dx/2, dy/2};
-            Eigen::Vector2d p2 = {xLine, dy/2};
-            Eigen::Vector2d p3 = {xLine, -dy/2};
-            Eigen::Vector2d p4 = {-dx/2, -dy/2};
-            std::vector<Eigen::Vector2d> polygon;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygon, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygon);
-                double totalArea = dx*dy;
-                curCell.neighCells[WEST]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, true);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[WEST]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-        } else if (fluxLines[0] > 0){
-            // x-flux is positive => calculate right alpha value
-            Eigen::Vector2d p1 = {xLine, dy/2};
-            Eigen::Vector2d p2 = {dx/2, dy/2};
-            Eigen::Vector2d p3 = {dx/2, -dy/2};
-            Eigen::Vector2d p4 = {xLine, -dy/2};
-            std::vector<Eigen::Vector2d> polygon;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygon, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygon);
-                double totalArea = dx*dy;
-                curCell.neighCells[EAST]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, true);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[EAST]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
+    double n = curCell.interfaceLine.n;
+    std::vector<Eigen::Vector2d> polygon;
+    Eigen::Vector2d p1 = {0, 0};
+    Eigen::Vector2d p2 = {0, 0};
+    Eigen::Vector2d p3 = {0, 0};
+    Eigen::Vector2d p4 = {0, 0};
+
+    if (direction == "EAST"){
+        fluxPoint = dx/2 - fluxLength;
+        Eigen::Vector2d p1 = {fluxPoint, dy/2};
+        Eigen::Vector2d p2 = {dx/2, dy/2};
+        Eigen::Vector2d p3 = {dx/2, -dy/2};
+        Eigen::Vector2d p4 = {fluxPoint, -dy/2};
+    } else if (direction == "WEST"){
+        fluxPoint = -dx/2 + fluxLength;
+        Eigen::Vector2d p1 = {-dx/2, dy/2};
+        Eigen::Vector2d p2 = {fluxPoint, dy/2};
+        Eigen::Vector2d p3 = {fluxPoint, -dy/2};
+        Eigen::Vector2d p4 = {-dx/2, -dy/2};
+    } else if (direction == "NORTH"){
+        fluxPoint = dy/2 - fluxLength;
+        Eigen::Vector2d p1 = {-dx/2, dy/2};
+        Eigen::Vector2d p2 = {dx/2, dy/2};
+        Eigen::Vector2d p3 = {dx/2, fluxPoint};
+        Eigen::Vector2d p4 = {-dx/2, fluxPoint};
+    } else if (direction == "SOUTH"){
+        fluxPoint = -dy/2 + fluxLength;
+        Eigen::Vector2d p1 = {-dx/2, fluxPoint};
+        Eigen::Vector2d p2 = {dx/2, fluxPoint};
+        Eigen::Vector2d p3 = {dx/2, -dy/2};
+        Eigen::Vector2d p4 = {-dx/2, -dy/2};
+    } else {
+        std::cerr << "Invalid direction" << std::endl;
+        return 0.0;
+    }
+    calculatePolygonArea(n, m, InterNormal, p1, p2, p3, p4, polygon, isIntersecting);
+    if (isIntersecting){
+        double liquidArea = shoeLaceFormula(polygon);
+        double totalArea = dx*dy;
+        return liquidArea/totalArea;
+    } else {
+        bool isInside = isSectionInsideAlpha(fluxPoint, curCell.interfaceMidPoint, InterNormal, direction);
+        if (isInside == true){
+            double liquidArea = shoeLaceFormula({p1, p2, p3, p4});
+            double totalArea = dx*dy;
+            return liquidArea/totalArea;
+        } else {
+            return 0.0;
         }
-    } else if (xLine != 0 && yLine != 0){
-        // x-line and y-line intersect
-        if (fluxLines[0] < 0 && fluxLines[1] < 0){
-            // x-flux and y-flux are negative
-            // First quadrant under y-line for south direction
-            Eigen::Vector2d p1 = {xLine, yLine};
-            Eigen::Vector2d p2 = {dx/2, yLine};
-            Eigen::Vector2d p3 = {dx/2, -dy/2};
-            Eigen::Vector2d p4 = {xLine, -dy/2};
-            std::vector<Eigen::Vector2d> polygonSouth;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonSouth, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonSouth);
-                double totalArea = dx*dy;
-                curCell.neighCells[SOUTH]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, false);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[SOUTH]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-            // Second quadrant under x-line for west direction
-            p1 = {-dx/2, dy/2};
-            p2 = {xLine, dy/2};
-            p3 = {xLine, yLine};
-            p4 = {-dx/2, yLine};
-            std::vector<Eigen::Vector2d> polygonWest;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonWest, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonWest);
-                double totalArea = dx*dy;
-                curCell.neighCells[WEST]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, true);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[WEST]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-            // Third quadrant under y-line for south-west direction
-            p1 = {-dx/2, yLine};
-            p2 = {xLine, yLine};
-            p3 = {xLine, -dy/2};
-            p4 = {-dx/2, -dy/2};
-            std::vector<Eigen::Vector2d> polygonSouthWest;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonSouthWest, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonSouthWest);
-                double totalArea = dx*dy;
-                curCell.neighCells[SOUTH]->neighCells[WEST]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, false);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[SOUTH]->neighCells[WEST]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-        } else if (fluxLines[0] > 0 && fluxLines[1] < 0){
-            // x-flux is positive and y-flux is negative
-            // First quadrant under y-line for south direction
-            Eigen::Vector2d p1 = {-dx/2, yLine};
-            Eigen::Vector2d p2 = {xLine, yLine};
-            Eigen::Vector2d p3 = {xLine, -dy/2};
-            Eigen::Vector2d p4 = {-dx/2, -dy/2};
-            std::vector<Eigen::Vector2d> polygonSouth;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonSouth, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonSouth);
-                double totalArea = dx*dy;
-                curCell.neighCells[SOUTH]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, false);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[SOUTH]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-            // Second quadrant under x-line for east direction
-            p1 = {xLine, dy/2};
-            p2 = {dx/2, dy/2};
-            p3 = {dx/2, yLine};
-            p4 = {xLine, yLine};
-            std::vector<Eigen::Vector2d> polygonEast;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonEast, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonEast);
-                double totalArea = dx*dy;
-                curCell.neighCells[EAST]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, true);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[EAST]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-            // Third quadrant under y-line for south-east direction
-            p1 = {xLine, yLine};
-            p2 = {dx/2, yLine};
-            p3 = {dx/2, -dy/2};
-            p4 = {xLine, -dy/2};
-            std::vector<Eigen::Vector2d> polygonSouthEast;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonSouthEast, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonSouthEast);
-                double totalArea = dx*dy;
-                curCell.neighCells[SOUTH]->neighCells[EAST]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, false);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[SOUTH]->neighCells[EAST]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-        } else if (fluxLines[0] < 0 && fluxLines[1] > 0){
-            // x-flux is negative and y-flux is positive
-            // First quadrant under x-line for north direction
-            Eigen::Vector2d p1 = {xLine, dy/2};
-            Eigen::Vector2d p2 = {dx/2, dy/2};
-            Eigen::Vector2d p3 = {dx/2, yLine};
-            Eigen::Vector2d p4 = {xLine, yLine};
-            std::vector<Eigen::Vector2d> polygonNorth;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonNorth, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonNorth);
-                double totalArea = dx*dy;
-                curCell.neighCells[NORTH]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, false);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[NORTH]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            } 
-            // Second quadrant under y-line for west direction
-            p1 = {-dx/2, yLine};
-            p2 = {xLine, yLine};
-            p3 = {xLine, -dy/2};
-            p4 = {-dx/2, -dy/2};
-            std::vector<Eigen::Vector2d> polygonWest;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonWest, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonWest);
-                double totalArea = dx*dy;
-                curCell.neighCells[WEST]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, true);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[WEST]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            } 
-            // Third quadrant under x-line for north-west direction
-            p1 = {-dx/2, dy/2};
-            p2 = {xLine, dy/2};
-            p3 = {xLine, yLine};
-            p4 = {-dx/2, yLine};
-            std::vector<Eigen::Vector2d> polygonNorthWest;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonNorthWest, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonNorthWest);
-                double totalArea = dx*dy;
-                curCell.neighCells[NORTH]->neighCells[WEST]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, false);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[NORTH]->neighCells[WEST]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-        } else if (fluxLines[0] > 0 && fluxLines[1] > 0){
-            // x-flux and y-flux are positive
-            // First quadrant under x-line for north direction
-            Eigen::Vector2d p1 = {-dx/2, dy/2};
-            Eigen::Vector2d p2 = {xLine, dy/2};
-            Eigen::Vector2d p3 = {xLine, yLine};
-            Eigen::Vector2d p4 = {-dx/2, yLine};
-            std::vector<Eigen::Vector2d> polygonNorth;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonNorth, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonNorth);
-                double totalArea = dx*dy;
-                curCell.neighCells[NORTH]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, false);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[NORTH]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-            // Second quadrant under y-line for east direction
-            p1 = {xLine, yLine};
-            p2 = {dx/2, yLine};
-            p3 = {dx/2, -dy/2};
-            p4 = {xLine, -dy/2};
-            std::vector<Eigen::Vector2d> polygonEast;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonEast, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonEast);
-                double totalArea = dx*dy;
-                curCell.neighCells[EAST]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, true);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[EAST]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-            // Third quadrant under y-line for north-east direction
-            p1 = {xLine, dy/2};
-            p2 = {dx/2, dy/2};
-            p3 = {dx/2, yLine};
-            p4 = {xLine, yLine};
-            std::vector<Eigen::Vector2d> polygonNorthEast;
-            calculatePolygonArea(n, m, normalVec, p1, p2, p3, p4, polygonNorthEast, isIntersecting);
-            if (isIntersecting){
-                double alphaArea = shoeLaceFormula(polygonNorthEast);
-                double totalArea = dx*dy;
-                curCell.neighCells[NORTH]->neighCells[EAST]->alphaFlux += alphaArea/totalArea;
-                curCell.alphaFlux -= alphaArea/totalArea;
-            } else {
-                bool isInside = isSectionInsideAlpha(p1, curCell.interfaceMidPoint, normalVec, false);
-                if (isInside == true){
-                    double alphaArea = shoeLaceFormula({p1, p2, p3, p4});
-                    double totalArea = dx*dy;
-                    curCell.neighCells[NORTH]->neighCells[EAST]->alphaFlux += alphaArea/totalArea;
-                    curCell.alphaFlux -= alphaArea/totalArea;
-                } else {
-                    return;
-                }
-            }
-        }      
-    } 
-}
-double interfaceFlux(Data2D& data, int cellId){
-    Cell2D curCell = data.cells[cellId];
-    double dx = curCell.faces[WEST]->dy;
-    double dy = curCell.faces[SOUTH]->dx;
-    std::vector<double> fluxLines = calculateFluxLines(data, cellId);
-    return 0.0;
+    }
 }
 
 void preformXSweep(Data2D& data){
@@ -616,18 +267,18 @@ void preformXSweep(Data2D& data){
         } else {
 
             if (curCell.neighCells[EAST]->alpha != 0 && curCell.neighCells[EAST]->alpha != 1){
-                fe = interfaceFlux(data, curCell.neighCells[EAST]->id);
+                fe = interfaceFlux(data, curCell.neighCells[EAST]->id, "WEST");
             } else {
                 fe = curCell.neighCells[EAST]->alpha*data.dt*curCell.faces[EAST]->u[CORRECTED_2]*curCell.faces[EAST]->dy;
             }
 
             if (curCell.neighCells[WEST]->alpha != 0 && curCell.neighCells[WEST]->alpha != 1){
-                fw = interfaceFlux(data, curCell.neighCells[WEST]->id);
+                fw = interfaceFlux(data, curCell.neighCells[WEST]->id, "EAST");
             } else {
                 fw = curCell.neighCells[EAST]->alpha*data.dt*curCell.faces[WEST]->u[CORRECTED_2]*curCell.faces[WEST]->dy;
             }
 
-            double tmp = (curCell.alpha + fw - fe)/(1 - data.dt/curCell.faces[NORTH]->dx*(curCell.faces[WEST]->u[CORRECTED_2] - curCell.faces[EAST]->u[CORRECTED_2]));
+            double tmp = (curCell.alpha + std::max(fw, 0.0) - std::max(-fe, 0.0))/(1 - data.dt/curCell.faces[NORTH]->dx*(curCell.faces[WEST]->u[CORRECTED_2] - curCell.faces[EAST]->u[CORRECTED_2]));
             interAlpha.push_back(tmp);
         }
     }
@@ -683,19 +334,20 @@ void preformYSweep(Data2D& data){
             continue;
         } else {
                 
-                if (curCell.neighCells[NORTH]->alpha != 0 && curCell.neighCells[NORTH]->alpha != 1){
-                    gn = interfaceFlux(data, curCell.neighCells[NORTH]->id);
+                if (curCell.neighCells[NORTH]->alpha != 0 && curCell.neighCells[NORTH]->alpha != 1 && curCell.faces[NORTH]->u[CORRECTED_2] < 0){
+                    gn = interfaceFlux(data, curCell.neighCells[NORTH]->id, "SOUTH");
+                    
                 } else {
                     gn = curCell.neighCells[NORTH]->alpha*data.dt*curCell.faces[NORTH]->v[CORRECTED_2]*curCell.faces[NORTH]->dx;
                 }
     
                 if (curCell.neighCells[SOUTH]->alpha != 0 && curCell.neighCells[SOUTH]->alpha != 1){
-                    gs = interfaceFlux(data, curCell.neighCells[SOUTH]->id);
+                    gs = interfaceFlux(data, curCell.neighCells[SOUTH]->id, "NORTH");
                 } else {
                     gs = curCell.neighCells[SOUTH]->alpha*data.dt*curCell.faces[SOUTH]->v[CORRECTED_2]*curCell.faces[SOUTH]->dx;
                 }
     
-                double tmp = (curCell.alpha + gs - gn + curCell.alpha*data.dt/curCell.faces[WEST]->dy*(curCell.faces[SOUTH]->v[CORRECTED_2] - curCell.faces[NORTH]->v[CORRECTED_2]));
+                double tmp = (curCell.alpha + std::max(gs, 0.0) - std::max(-gn, 0.0) + curCell.alpha*data.dt/curCell.faces[WEST]->dy*(curCell.faces[SOUTH]->v[CORRECTED_2] - curCell.faces[NORTH]->v[CORRECTED_2]));
                 interAlpha.push_back(tmp);
         }
     }

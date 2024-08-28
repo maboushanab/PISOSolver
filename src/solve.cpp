@@ -116,17 +116,6 @@ double fEta(Data2D& data, double alpha){
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                             CORRECTOR STEP 1                                                   //
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
 void computeScalarCoeff(Data2D& data, int cellId){
     Cell2D *curCell = &data.cells[cellId];
     double dx = curCell->faces[SOUTH]->dx;
@@ -251,8 +240,6 @@ void unstaggerGrid(Data2D& data, int step) {
         Cell2D *curCell = &data.cells[i];
         curCell->u[step] = 0.5 * (curCell->faces[EAST]->u[step]+ curCell->faces[WEST]->u[step]);
         curCell->v[step] = 0.5 * (curCell->faces[NORTH]->v[step] + curCell->faces[SOUTH]->v[step]);
-        // curCell->u[step] = curCell->faces[EAST]->u[step];
-        // curCell->v[step] = curCell->faces[NORTH]->v[step];
     }
 }
 
