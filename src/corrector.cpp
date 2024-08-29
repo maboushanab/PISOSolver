@@ -112,10 +112,10 @@ void computePressureCoeff(Data2D& data, int cellId){
     double dx = curCell->faces[SOUTH]->dx;
     double dy = curCell->faces[WEST]->dy;
 
-    curCell->a_e = (fRho(data, curCell->neighCells[EAST]->alpha) * dy * dy) / curCell->faces[EAST]->a_p_tilde;
-    curCell->a_w = (fRho(data, curCell->neighCells[WEST]->alpha) * dy * dy) / curCell->faces[WEST]->a_p_tilde;
-    curCell->a_n = (fRho(data, curCell->neighCells[NORTH]->alpha) * dx * dx) / curCell->faces[NORTH]->a_p_tilde;
-    curCell->a_s = (fRho(data, curCell->neighCells[SOUTH]->alpha) * dx * dx) / curCell->faces[SOUTH]->a_p_tilde;
+    curCell->a_e = (fRho(data, curCell->neighCells[EAST]->alpha) * dy) / curCell->faces[EAST]->a_p_tilde;
+    curCell->a_w = (fRho(data, curCell->neighCells[WEST]->alpha) * dy) / curCell->faces[WEST]->a_p_tilde;
+    curCell->a_n = (fRho(data, curCell->neighCells[NORTH]->alpha) * dx) / curCell->faces[NORTH]->a_p_tilde;
+    curCell->a_s = (fRho(data, curCell->neighCells[SOUTH]->alpha) * dx) / curCell->faces[SOUTH]->a_p_tilde;
     // curCell->a_e = -dy/(dx*fRho(data, curCell->neighCells[EAST]->alpha));
     // curCell->a_w = -dy/(dx*fRho(data, curCell->neighCells[WEST]->alpha));
     // curCell->a_n = -dx/(dy*fRho(data, curCell->neighCells[NORTH]->alpha));
