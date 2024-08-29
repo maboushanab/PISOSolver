@@ -70,12 +70,12 @@ void setPressureMatrix(Data2D& data, SpMat& pressureMatrix, Vector& pressureVect
     }
     // set corner node of the grid to dirichlet with p = 1
     for (int j = 0; j < nCells; j++) {
-        if (j != 0) {
-            pressureMatrix.coeffRef(0, j) = 0.0;
+        if (j != 200) {
+            pressureMatrix.coeffRef(200, j) = 0.0;
         }
     }
-    pressureMatrix.coeffRef(0, 0) = 1.0;
-    pressureVector(0) = 1.0;
+    pressureMatrix.coeffRef(100, 200) = 1.0;
+    pressureVector(200) = 1.0;
     // // set corner node of the grid to dirichlet with p = 0
     // for (int j = 0; j < nCells; j++) {
     //     if (j != data.dimX - 1) {
@@ -112,18 +112,13 @@ void computePressureCoeff(Data2D& data, int cellId){
     double dx = curCell->faces[SOUTH]->dx;
     double dy = curCell->faces[WEST]->dy;
 
-    curCell->a_e = (fRho(data, curCell->neighCells[EAST]->alpha) * dy) / curCell->faces[EAST]->a_p_tilde;
-    curCell->a_w = (fRho(data, curCell->neighCells[WEST]->alpha) * dy) / curCell->faces[WEST]->a_p_tilde;
-    curCell->a_n = (fRho(data, curCell->neighCells[NORTH]->alpha) * dx) / curCell->faces[NORTH]->a_p_tilde;
-    curCell->a_s = (fRho(data, curCell->neighCells[SOUTH]->alpha) * dx) / curCell->faces[SOUTH]->a_p_tilde;
-    // curCell->a_e = -dy/(dx*fRho(data, curCell->neighCells[EAST]->alpha));
-    // curCell->a_w = -dy/(dx*fRho(data, curCell->neighCells[WEST]->alpha));
-    // curCell->a_n = -dx/(dy*fRho(data, curCell->neighCells[NORTH]->alpha));
-    // curCell->a_s = -dx/(dy*fRho(data, curCell->neighCells[SOUTH]->alpha));
+    curCell->a_e = ((fRho(data, curCell->neighCells[EAST]->alpha) + fRho(data, curCell->alpha))/2 * dy * dy) / curCell->faces[EAST]->a_p_tilde;
+    curCell->a_w = ((fRho(data, curCell->neighCells[WEST]->alpha) + fRho(data, curCell->alpha))/2 * dy * dy) / curCell->faces[WEST]->a_p_tilde;
+    curCell->a_n = ((fRho(data, curCell->neighCells[NORTH]->alpha) + fRho(data, curCell->alpha))/2 * dx * dx) / curCell->faces[NORTH]->a_p_tilde;
+    curCell->a_s = ((fRho(data, curCell->neighCells[SOUTH]->alpha) + fRho(data, curCell->alpha))/2 * dx * dx) / curCell->faces[SOUTH]->a_p_tilde;
     curCell->a_p = curCell->a_e + curCell->a_w + curCell->a_n + curCell->a_s;
     curCell->b = - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[EAST]->alpha)) * 0.5 * curCell->faces[EAST]->u[INTERMEDIATE_1] * dy) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[WEST]->alpha)) * 0.5 *curCell->faces[WEST]->u[INTERMEDIATE_1] * dy) 
     - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[NORTH]->alpha))* 0.5 *curCell->faces[NORTH]->v[INTERMEDIATE_1] * dx) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[SOUTH]->alpha))* 0.5 *curCell->faces[SOUTH]->v[INTERMEDIATE_1] * dx); 
-    // + (fRho(data, curCell->alpha_prev) - fRho(data, curCell->alpha)) * dx * dy / data.dt;
     if (data.mode == 0){
         curCell->b += (fRho(data, curCell->alpha_prev) - fRho(data, curCell->alpha)) * dx * dy / data.dt;
     }
@@ -176,6 +171,12 @@ void computePressureCoeff2(Data2D& data, int cellId){
  */
 
 void correctPressureEquationBiCGStab(Data2D& data, int step) {
+    std::cout << std::endl;
+    if (step == INTERMEDIATE_1){
+        std::cout << "Corrector 1 using BiCGStab" << std::endl;
+    } else if (step == INTERMEDIATE_2){
+        std::cout << "Corrector 2 using BiCGStab" << std::endl;
+    }
     SpMat pressureCorrMatrix(data.nCells, data.nCells);
     Vector pressureCorrVector(data.nCells);
     pressureCorrMatrix.setZero();
@@ -207,16 +208,22 @@ void correctPressureEquationBiCGStab(Data2D& data, int step) {
         // Solve for pressure correction
         // with preconditioner
         Eigen::BiCGSTAB<SpMat, Eigen::IncompleteLUT<double>> solver;
-        // // solve with gmres
-        // Eigen::GMRES<SpMat, Eigen::IdentityPreconditioner> solver;
+        solver.setMaxIterations(1000); // Increase iteration count if needed
+        solver.setTolerance(1e-6);     // Adjust the tolerance to balance accuracy and speed
         solver.compute(pressureCorrMatrix);
         if (solver.info() != Eigen::Success) {
             throw std::runtime_error("Decomposition failed for pressureCorrMatrix");
         }
         Vector pressureCorrSolution = solver.solve(pressureCorrVector);
-        if (solver.info() != Eigen::Success) {
-            throw std::runtime_error("Solving failed for pressureCorrMatrix on corrector step " + std::to_string(step));
+        if (solver.info() == Eigen::NoConvergence) {
+            throw std::runtime_error("Solving failed for pressureCorrMatrix: No convergence");
+        } else if (solver.info() == Eigen::NumericalIssue) {
+            throw std::runtime_error("Solving failed for pressureCorrMatrix: Numerical issues");
+        } else if (solver.info() != Eigen::Success) {
+            throw std::runtime_error("Solving failed for pressureCorrMatrix");
         }
+        std::cout << "Iterations: " << solver.iterations();
+        std::cout << " || Estimated error: " << solver.error() << std::endl;
         //Orthogonalization if the sum of b is not zero
         // if (!data.bIsZero){
         //     double pAvg = pressureCorrSolution.mean();
@@ -297,7 +304,7 @@ void correctPressureEquation(Data2D& data, int step) {
  */
 void corrector1(Data2D& data) {
     // Update Pressure bzw. cells
-    data.alpha_p_relax = 0.5;
+    data.alpha_p_relax = 1.0;
     for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
         if (curCell->bType_p == INNERCELL) {
@@ -344,7 +351,7 @@ void corrector1(Data2D& data) {
             curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[EAST]->p[CORRECTED_1] + curCell->neighCells[NORTH]->p[CORRECTED_1]);
         }
     }
-    data.cells[0].p[CORRECTED_1] = 1.0;
+    data.cells[200].p[CORRECTED_1] = 1.0;
 
     // Update Velocities bzw. faces
     for (int i = 0; i < data.nFaces; i++) {
@@ -400,7 +407,7 @@ void corrector1(Data2D& data) {
 }
 
 void corrector2(Data2D& data){
-    data.alpha_p_relax = 0.5;
+    data.alpha_p_relax = 1.0;
     for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
         if (curCell->bType_p == INNERCELL) {
@@ -447,25 +454,25 @@ void corrector2(Data2D& data){
             curCell->p[CORRECTED_2] = 0.5 * (curCell->neighCells[EAST]->p[CORRECTED_2] + curCell->neighCells[NORTH]->p[CORRECTED_2]);
         }
     }
-    data.cells[0].p[CORRECTED_2] = 1.0; 
+    data.cells[200].p[CORRECTED_2] = 1.0; 
     // Update Velocities bzw. faces
     for (int i = 0; i < data.nFaces; i++) {
         Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
             if (i < data.nhorizontalFaces) {
-                // double sum_a_v_nb = curFace->neighCells[NORTH]->neighCells[WEST]->faces[SOUTH]->a_p_tilde * curFace->neighCells[NORTH]->neighCells[WEST]->faces[SOUTH]->v[CORRECTED_1]
-                //             + curFace->neighCells[NORTH]->neighCells[EAST]->faces[SOUTH]->a_p_tilde * curFace->neighCells[NORTH]->neighCells[EAST]->faces[SOUTH]->v[CORRECTED_1]
-                //             + curFace->neighCells[NORTH]->faces[NORTH]->a_p_tilde * curFace->neighCells[NORTH]->faces[NORTH]->v[CORRECTED_1]
-                //             + curFace->neighCells[NORTH]->faces[SOUTH]->a_p_tilde * curFace->neighCells[NORTH]->faces[SOUTH]->v[CORRECTED_1];
-                // curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2] + ((curFace->neighCells[DOWN]->p[INTERMEDIATE_2] - curFace->neighCells[UP]->p[INTERMEDIATE_2]) * curFace->dx + sum_a_v_nb) / curFace->a_p_tilde;
-                curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2] + ((curFace->neighCells[DOWN]->p[INTERMEDIATE_2] - curFace->neighCells[UP]->p[INTERMEDIATE_2]) * curFace->dx + curFace->v[CORRECTED_1]) / curFace->a_p_tilde;
+                double sum_a_v_nb = curFace->neighCells[NORTH]->neighCells[WEST]->faces[SOUTH]->a_p_tilde * curFace->neighCells[NORTH]->neighCells[WEST]->faces[SOUTH]->v[CORRECTED_1]
+                            + curFace->neighCells[NORTH]->neighCells[EAST]->faces[SOUTH]->a_p_tilde * curFace->neighCells[NORTH]->neighCells[EAST]->faces[SOUTH]->v[CORRECTED_1]
+                            + curFace->neighCells[NORTH]->faces[NORTH]->a_p_tilde * curFace->neighCells[NORTH]->faces[NORTH]->v[CORRECTED_1]
+                            + curFace->neighCells[NORTH]->faces[SOUTH]->a_p_tilde * curFace->neighCells[NORTH]->faces[SOUTH]->v[CORRECTED_1];
+                curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2] + ((curFace->neighCells[DOWN]->p[INTERMEDIATE_2] - curFace->neighCells[UP]->p[INTERMEDIATE_2]) * curFace->dx + sum_a_v_nb) / curFace->a_p_tilde;
+                //curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2] + ((curFace->neighCells[DOWN]->p[INTERMEDIATE_2] - curFace->neighCells[UP]->p[INTERMEDIATE_2]) * curFace->dx + curFace->v[CORRECTED_1]) / curFace->a_p_tilde;
             } else if (i >= data.nhorizontalFaces) {
-                // double sum_a_u_nb = curFace->neighCells[LEFT]->faces[WEST]->a_p_tilde * curFace->neighCells[LEFT]->faces[WEST]->u[CORRECTED_1]
-                //             + curFace->neighCells[RIGHT]->faces[EAST]->a_p_tilde * curFace->neighCells[RIGHT]->faces[EAST]->u[CORRECTED_1]
-                //             + curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->a_p_tilde * curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->u[CORRECTED_1]
-                //             + curFace->neighCells[RIGHT]->neighCells[SOUTH]->faces[WEST]->a_p_tilde * curFace->neighCells[RIGHT]->neighCells[SOUTH]->faces[WEST]->u[CORRECTED_1];
-                // curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2] + ((curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy + sum_a_u_nb) / curFace->a_p_tilde;
-                curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2] + ((curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy + curFace->u[CORRECTED_1]) / curFace->a_p_tilde;
+                double sum_a_u_nb = curFace->neighCells[LEFT]->faces[WEST]->a_p_tilde * curFace->neighCells[LEFT]->faces[WEST]->u[CORRECTED_1]
+                            + curFace->neighCells[RIGHT]->faces[EAST]->a_p_tilde * curFace->neighCells[RIGHT]->faces[EAST]->u[CORRECTED_1]
+                            + curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->a_p_tilde * curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->u[CORRECTED_1]
+                            + curFace->neighCells[RIGHT]->neighCells[SOUTH]->faces[WEST]->a_p_tilde * curFace->neighCells[RIGHT]->neighCells[SOUTH]->faces[WEST]->u[CORRECTED_1];
+                curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2] + ((curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy + sum_a_u_nb) / curFace->a_p_tilde;
+                //curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2] + ((curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy + curFace->u[CORRECTED_1]) / curFace->a_p_tilde;
             }
         } else if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID){
             if (i < data.nhorizontalFaces) {

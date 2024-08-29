@@ -48,6 +48,7 @@ void iterateSteady(Data2D& data, int iteration){
 
         correctPressureEquation(data, INTERMEDIATE_2);
         corrector2(data);
+        rhsConvergence(data);
     }
 
     //calcScalarTransfer(data);
@@ -282,6 +283,25 @@ void resetData(Data2D& data) {
             curFace->v[INITIAL] = curFace->v[CORRECTED_2];
         }
     }
+}
+
+void rhsConvergence(Data2D data){
+    double rhs = 0;
+    for(int i = 0; i < data.nCells; i++){
+        Cell2D *curCell = &data.cells[i];
+        double dx = curCell->faces[SOUTH]->dx;
+        double dy = curCell->faces[WEST]->dy;
+        if (curCell->bType_p == INNERCELL) {
+            double b = - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[EAST]->alpha)) * 0.5 * curCell->faces[EAST]->u[INTERMEDIATE_1] * dy) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[WEST]->alpha)) * 0.5 *curCell->faces[WEST]->u[INTERMEDIATE_1] * dy) 
+                    - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[NORTH]->alpha))* 0.5 *curCell->faces[NORTH]->v[INTERMEDIATE_1] * dx) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[SOUTH]->alpha))* 0.5 *curCell->faces[SOUTH]->v[INTERMEDIATE_1] * dx);
+            rhs += b; 
+        } else if (curCell->bType_p == DIRICHLET || curCell->bType_p == SOLID) {
+            double b = curCell->p[CORRECTED_2];
+            rhs += b;
+        }
+    }
+    std::cout << "RHS: " << rhs << std::endl;
+
 }
 
 void assignVelocities(Data2D& data, int step){

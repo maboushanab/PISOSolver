@@ -31,6 +31,7 @@ void calcScalarTransfer(Data2D& data);
 // Convergence
 double continutyResidual(Data2D& data, int cellId, int step);
 void checkConvergence(Data2D& data, int iteration);
+void rhsConvergence(Data2D data);
 // Reset
 void resetData(Data2D& data);
 void assignPrevData(Data2D& data);

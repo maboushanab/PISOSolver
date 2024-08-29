@@ -49,7 +49,6 @@ void residualPlot(Data2D& data, std::string finalDirectoryName) {
     matplotlibcpp::xlabel("Iteration");
     matplotlibcpp::ylabel("Residual");
     matplotlibcpp::grid(true);
-    matplotlibcpp::legend();
     // matplotlibcpp::show();
     matplotlibcpp::save("../out/" + finalDirectoryName + "/residualPlot.png");
 }

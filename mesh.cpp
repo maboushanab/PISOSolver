@@ -192,8 +192,8 @@ void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
         return;
     }
     
-    int xDim = keywordValues.at("x") / keywordValues.at("dx");
-    int yDim = keywordValues.at("y") / keywordValues.at("dy");
+    int xDim = 1 + keywordValues.at("x")/ keywordValues.at("dx");
+    int yDim = 1 + keywordValues.at("y")/ keywordValues.at("dy");
 
     std::ofstream meshFile("in.mesh");
 

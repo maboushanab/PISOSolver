@@ -308,6 +308,8 @@ void predictVelocityFieldGaussSeidl(Data2D& data) {
 //         IMPLICIT EIGEN SOLVER METHOD      //
 ///////////////////////////////////////////////
 void predictVelocityFieldBiCGStab(Data2D& data) {
+    std::cout << std::endl;
+    std::cout << "Velocity Prediction using BiCGStab" << std::endl;
     for (int i = 0; i < data.nFaces; i++) {
         Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {                        
@@ -333,16 +335,23 @@ void predictVelocityFieldBiCGStab(Data2D& data) {
     try {
         // Solve for uMatrix
         Eigen::BiCGSTAB<SpMat> solver;
-        solver.setTolerance(1e-6);
-        solver.setMaxIterations(10000);
+        solver.setMaxIterations(1000); // Increase iteration count if needed
+        solver.setTolerance(1e-6);     // Adjust the tolerance to balance accuracy and speed
         solver.compute(momMatrix);
         if (solver.info() != Eigen::Success) {
             throw std::runtime_error("Decomposition failed for momMatrix");
         }
         Vector solution = solver.solve(momVector);
-        if (solver.info() != Eigen::Success) {
+        if (solver.info() == Eigen::NoConvergence) {
+            throw std::runtime_error("Solving failed for momMatrix: No convergence");
+        } else if (solver.info() == Eigen::NumericalIssue) {
+            throw std::runtime_error("Solving failed for momMatrix: Numerical issues");
+        } else if (solver.info() != Eigen::Success) {
             throw std::runtime_error("Solving failed for momMatrix");
         }
+        std::cout << "Iterations: " << solver.iterations();
+        std::cout << " || Estimated error: " << solver.error() << std::endl;
+
 
         // Update the faces with the solution
         for (int i = 0; i < data.nFaces; i++) {
