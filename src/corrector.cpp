@@ -70,12 +70,12 @@ void setPressureMatrix(Data2D& data, SpMat& pressureMatrix, Vector& pressureVect
     }
     // set corner node of the grid to dirichlet with p = 1
     for (int j = 0; j < nCells; j++) {
-        if (j != 200) {
-            pressureMatrix.coeffRef(200, j) = 0.0;
+        if (j != 101) {
+            pressureMatrix.coeffRef(101, j) = 0.0;
         }
     }
-    pressureMatrix.coeffRef(100, 200) = 1.0;
-    pressureVector(200) = 1.0;
+    pressureMatrix.coeffRef(101, 101) = 1.0;
+    pressureVector(101) = 1.0;
     // // set corner node of the grid to dirichlet with p = 0
     // for (int j = 0; j < nCells; j++) {
     //     if (j != data.dimX - 1) {
@@ -351,7 +351,7 @@ void corrector1(Data2D& data) {
             curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[EAST]->p[CORRECTED_1] + curCell->neighCells[NORTH]->p[CORRECTED_1]);
         }
     }
-    data.cells[200].p[CORRECTED_1] = 1.0;
+    data.cells[101].p[CORRECTED_1] = 1.0;
 
     // Update Velocities bzw. faces
     for (int i = 0; i < data.nFaces; i++) {
@@ -454,7 +454,7 @@ void corrector2(Data2D& data){
             curCell->p[CORRECTED_2] = 0.5 * (curCell->neighCells[EAST]->p[CORRECTED_2] + curCell->neighCells[NORTH]->p[CORRECTED_2]);
         }
     }
-    data.cells[200].p[CORRECTED_2] = 1.0; 
+    data.cells[101].p[CORRECTED_2] = 1.0; 
     // Update Velocities bzw. faces
     for (int i = 0; i < data.nFaces; i++) {
         Face2D *curFace = &data.faces[i];

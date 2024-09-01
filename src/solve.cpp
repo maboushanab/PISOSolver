@@ -48,7 +48,6 @@ void iterateSteady(Data2D& data, int iteration){
 
         correctPressureEquation(data, INTERMEDIATE_2);
         corrector2(data);
-        rhsConvergence(data);
     }
 
     //calcScalarTransfer(data);
@@ -117,62 +116,6 @@ double fEta(Data2D& data, double alpha){
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void computeScalarCoeff(Data2D& data, int cellId){
-    Cell2D *curCell = &data.cells[cellId];
-    double dx = curCell->faces[SOUTH]->dx;
-    double dy = curCell->faces[WEST]->dy;
-    double dt = data.dt;
-    double d_e = fEta(data, curCell->neighCells[EAST]->alpha) / dx;
-    double d_w = fEta(data, curCell->neighCells[WEST]->alpha) / dx;
-    double d_n = fEta(data, curCell->neighCells[NORTH]->alpha) / dy;
-    double d_s = fEta(data, curCell->neighCells[SOUTH]->alpha) / dy;
-    double f_e = 0.5 * (fRho(data, curCell->neighCells[EAST]->alpha) + fRho(data, curCell->alpha)) * curCell->faces[EAST]->u[CORRECTED_2];
-    double f_w = 0.5 * (fRho(data, curCell->neighCells[WEST]->alpha) + fRho(data, curCell->alpha)) * curCell->faces[WEST]->u[CORRECTED_2];
-    double g_n = 0.5 * (fRho(data, curCell->neighCells[NORTH]->alpha) + fRho(data, curCell->alpha)) * curCell->faces[NORTH]->v[CORRECTED_2];
-    double g_s = 0.5 * (fRho(data, curCell->neighCells[SOUTH]->alpha) + fRho(data, curCell->alpha)) * curCell->faces[SOUTH]->v[CORRECTED_2];
-    curCell->a_e_sc = d_e * dy * A(data, f_e / d_e) + std::max(-f_e*dy, 0.0);
-    curCell->a_w_sc = d_w * dy * A(data, f_w / d_w) + std::max(f_w*dy, 0.0);
-    curCell->a_n_sc = d_n * dx * A(data, g_n / d_n) + std::max(-g_n*dx, 0.0);
-    curCell->a_s_sc = d_s * dx * A(data, g_s / d_s) + std::max(g_s*dx, 0.0);
-    curCell->b_sc = curCell->a_p_v_sc*curCell->alpha;
-    curCell->a_p_v_sc = fRho(data, curCell->neighCells[NORTH]->alpha) * dx * dy / dt;
-    curCell->a_p_sc = curCell->a_e_sc + curCell->a_w_sc + curCell->a_n_sc + curCell->a_s_sc + curCell->a_p_v_sc;
-}
-
-void calcScalarTransfer(Data2D& data){
-    for (int i = 0; i < data.nCells; i++) {
-        Cell2D *curCell = &data.cells[i];
-        if (curCell->bType_sc == INNERCELL) {
-            computeScalarCoeff(data, i);
-        }
-    }
-    for (int i = 0; i < data.nCells; i++) {
-        Cell2D *curCell = &data.cells[i];
-        if (curCell->bType_sc == INNERCELL) {
-            curCell->alpha = (1/curCell->a_p_sc) * (curCell->b_sc + curCell->a_w_sc * curCell->neighCells[WEST]->sc + curCell->a_e_sc * curCell->neighCells[EAST]->sc + curCell->a_n_sc * curCell->neighCells[NORTH]->sc + curCell->a_s_sc * curCell->neighCells[SOUTH]->sc);
-        } else if (curCell->bType_sc == DIRICHLET || curCell->bType_sc == SOLID) {
-            curCell->alpha = curCell->alpha;
-        } 
-    }
-    for (int i = 0; i < data.nCells; i++) {
-        Cell2D *curCell = &data.cells[i];
-        if (curCell->bType_sc == NEUMANN) {
-            if (curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) {
-                curCell->alpha = curCell->neighCells[WEST]->alpha + curCell->g_sc * curCell->faces[WEST]->dx;
-            }
-            if (curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) {
-                curCell->sc = curCell->neighCells[EAST]->alpha - curCell->g_sc * curCell->faces[EAST]->dx;
-            }
-            if (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID) {
-                curCell->sc = curCell->neighCells[SOUTH]->alpha + curCell->g_sc * curCell->faces[SOUTH]->dy;
-            }
-            if (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID) {
-                curCell->sc = curCell->neighCells[NORTH]->alpha - curCell->g_sc * curCell->faces[NORTH]->dy;
-            }
-        }
-    }
-}
-
 double continutyResidual(Data2D& data, int cellId, int step){
     Cell2D *curCell = &data.cells[cellId];
     double rho_e;
@@ -217,8 +160,9 @@ void checkConvergence(Data2D& data, int iteration){
     }
     double rmsRes = sqrt(abs(res)/data.nCells);
     data.continuityResiduals.push(rmsRes);
-    if (rmsRes > 1e-8 && iteration < data.maxIteration){
+    // if (rmsRes > 1e-8 && iteration < data.maxIteration){
     //if (iteration < data.maxIteration){
+    if (rhsConvergence(data) > 1e-8 && iteration < data.maxIteration){
         data.stackOfContinuityResiduals.push(data.continuityResiduals);
         iteration++;
         resetData(data);
@@ -255,7 +199,7 @@ void assignPrevData(Data2D& data){
     }
     for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
-        curCell->alpha_prev = curCell->p[CORRECTED_2];
+        curCell->alpha_prev = curCell->alpha;
     }
 }
 
@@ -285,7 +229,7 @@ void resetData(Data2D& data) {
     }
 }
 
-void rhsConvergence(Data2D data){
+double rhsConvergence(Data2D data){
     double rhs = 0;
     for(int i = 0; i < data.nCells; i++){
         Cell2D *curCell = &data.cells[i];
@@ -301,7 +245,7 @@ void rhsConvergence(Data2D data){
         }
     }
     std::cout << "RHS: " << rhs << std::endl;
-
+    return rhs;
 }
 
 void assignVelocities(Data2D& data, int step){

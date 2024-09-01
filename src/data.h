@@ -116,6 +116,7 @@ struct Cell2D {
     double alphaFlux;       // alpha flux
 
     double normalVector[2]; //normal vector
+    bool xCoordinates;                 //x coordinates for interface line
     Eigen::Vector2d interfaceMidPoint; //point on the interface line
 
     // numeric quantities

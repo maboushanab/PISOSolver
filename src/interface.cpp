@@ -130,8 +130,22 @@ void calcAlphaNormalVector3x3(Data2D& data, int cellId){
  */
 void initInterface(Data2D& data, int cellId){
     Cell2D *curCell = &data.cells[cellId];
-    curCell->interfaceLine.n = 0;
-    curCell->interfaceLine.m = -(curCell->normalVector[0]/curCell->normalVector[1]); // m = -nx/ny
+    curCell->interfaceLine.n = curCell->faces[WEST]->dy * (0.5-curCell->alpha);
+    double nx = curCell->normalVector[0];
+    double ny = curCell->normalVector[1];
+    if (std::abs(nx) <= std::abs(ny)){
+        curCell->interfaceLine.m = -(nx/ny);
+        // if (curCell->interfaceLine.m  == 0){
+        //     curCell->interfaceLine.m = 0.1;
+        // }
+        curCell->xCoordinates = false;
+    } else {
+        curCell->interfaceLine.m = -(ny/nx);
+        // if (curCell->interfaceLine.m == 0){
+        //     curCell->interfaceLine.m = 0.1;
+        // }
+        curCell->xCoordinates = true;
+    }
 }
 
 /**
@@ -142,8 +156,12 @@ void initInterface(Data2D& data, int cellId){
  * @param n The y-intercept of the line.
  * @return The calculated value of x.
  */
-double x(double y, double m, double n){
-    return (y - n)/m;
+double x(double y, double m, double n, bool xCoordinates){
+    if (xCoordinates == false){
+        return (y - n)/m;
+    } else {
+        return m*y + n;
+    }
 }
 
 /**
@@ -154,14 +172,19 @@ double x(double y, double m, double n){
  * @param n The y-intercept of the line.
  * @return The calculated value of y.
  */
-double y(double x, double m, double n){
-    return m*x + n;
+double y(double x, double m, double n, bool xCoordinates){
+    if (xCoordinates == false){
+        return m*x + n;
+    } else {
+        return (x - n)/m;
+    }
 }
 
 void determinePolygonAsCell(Data2D& data, int cellId, std::vector<Eigen::Vector2d>& polygon, double m, double n){
     Cell2D *curCell = &data.cells[cellId];
     double dx = curCell->faces[NORTH]->dx;
     double dy = curCell->faces[WEST]->dy;
+    bool xCoordinates = curCell->xCoordinates;
     std::vector<Eigen::Vector2d> cell = {
         Eigen::Vector2d(-dx/2, dy/2),
         Eigen::Vector2d(dx/2, dy/2),
@@ -172,24 +195,24 @@ void determinePolygonAsCell(Data2D& data, int cellId, std::vector<Eigen::Vector2
     std::vector<Eigen::Vector2d> intersectionPoints;
     std::vector<Eigen::Vector2d> polygon1;
     std::vector<Eigen::Vector2d> polygon2;
-    if (x(dy/2, m, n) > -dx/2 && x(dy/2, m, n) < dx/2) { // top face
-        vertex(0) = x(dy/2, m, n);
+    if (x(dy/2, m, n, xCoordinates) >= -dx/2 && x(dy/2, m, n, xCoordinates) <= dx/2) { // top face
+        vertex(0) = x(dy/2, m, n, xCoordinates);
         vertex(1) = dy/2;
         intersectionPoints.push_back(vertex);
     }
-    if (y(dx/2, m, n) > -dy/2 && y(dx/2, m, n) < dy/2) { // right face
+    if (y(dx/2, m, n, xCoordinates) >= -dy/2 && y(dx/2, m, n, xCoordinates) <= dy/2) { // right face
         vertex(0) = dx/2;
-        vertex(1) = y(dx/2, m, n);
+        vertex(1) = y(dx/2, m, n, xCoordinates);
         intersectionPoints.push_back(vertex);
     }
-    if (x(-dy/2, m, n) > -dx/2 && x(-dy/2, m, n) < dx/2) { // bottom face
-        vertex(0) = x(-dy/2, m, n);
+    if (x(-dy/2, m, n, xCoordinates) >= -dx/2 && x(-dy/2, m, n, xCoordinates) <= dx/2) { // bottom face
+        vertex(0) = x(-dy/2, m, n, xCoordinates);
         vertex(1) = -dy/2;
         intersectionPoints.push_back(vertex);
     }
-    if (y(-dx/2, m, n) > -dy/2 && y(-dx/2, m, n) < dy/2) { // left face
+    if (y(-dx/2, m, n, xCoordinates) >= -dy/2 && y(-dx/2, m, n, xCoordinates) <= dy/2) { // left face
         vertex(0) = -dx/2;
-        vertex(1) = y(-dx/2, m, n);
+        vertex(1) = y(-dx/2, m, n, xCoordinates);
         intersectionPoints.push_back(vertex);
     }
 
@@ -278,9 +301,9 @@ void determinePolygonAsCell(Data2D& data, int cellId, std::vector<Eigen::Vector2
     Eigen::Vector2d normalVec = {curCell->normalVector[0], curCell->normalVector[1]};
     double crossProduct = edgeVec.x()*normalVec.y() - edgeVec.y()*normalVec.x();
     if (crossProduct < 0){
-        polygon = polygon2;
-    } else {
         polygon = polygon1;
+    } else {
+        polygon = polygon2;
     }
 }
 
@@ -309,14 +332,14 @@ double calcAlphaPrediction(Data2D& data, int cellId, double m, double n, bool pr
     std::vector<Eigen::Vector2d> polygon;
     determinePolygonAsCell(data, cellId, polygon, m, n);
     std::stack<Eigen::Vector2d> vertices;
-    if (print){
-        std::cout << "Polygon size: " << polygon.size() << " with n: " << n << std::endl;
-    }
+    // if (print){
+    //     std::cout << "Polygon size: " << polygon.size() << " with n: " << n << std::endl;
+    // }
     for (int i = 0; i < polygon.size(); i++){
         vertices.push(polygon[i]);
-        if (print){
-            std::cout << "Polygon vertex: " << polygon[i](0) << " " << polygon[i](1) << std::endl;
-        }
+        // if (print){
+        //     std::cout << "Polygon vertex: " << polygon[i](0) << " " << polygon[i](1) << std::endl;
+        // }
     }
     //Goldman Area of Planar Polygons
     double area = 0;
@@ -421,11 +444,11 @@ void estimateInterfaceLine(Data2D& data, int cellId){
         // }
         i++;
     }
-    if (i == 10000){
-        std::cout << "Failed to converge for cell " << cellId << std::endl;
-    } else {
-        std::cout << "Converged for cell " << cellId << " in " << i << " iterations and alphaDiff: " << alphaDiff << std::endl;
-    }
+    // if (i == 10000){
+    //     std::cout << "Failed to converge for cell " << cellId << std::endl;
+    // } else {
+    //     std::cout << "Converged for cell " << cellId << " in " << i << " iterations and alphaDiff: " << alphaDiff << std::endl;
+    // }
     calcAlphaPrediction(data, cellId, m, n, true);
     curCell->interfaceLine.n = n;
 }
@@ -469,8 +492,8 @@ void reconstructInterfaceLines(Data2D& data){
                 calcAlphaNormalVectorBoundary(data, i, CellPosition::BottomEdge);
                 estimateInterfaceLine(data, i);
             } 
-            
-            std::cout << "Cell " << i << " alpha: " << curCell->alpha << " alpha prediction: " << calcAlphaPrediction(data, i, curCell->interfaceLine.m, curCell->interfaceLine.n, false) << std::endl;
+            // std::cout << "Cell " << i << " normal vector: " << curCell->normalVector[0] << " " << curCell->normalVector[1] << std::endl;
+            // std::cout << "Cell " << i << " alpha: " << curCell->alpha << " alpha prediction: " << calcAlphaPrediction(data, i, curCell->interfaceLine.m, curCell->interfaceLine.n, false) << std::endl;
         }
     }
 }

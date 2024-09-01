@@ -34,7 +34,7 @@ double calculateFluxLength(Data2D data, int cellId, std::string direction){
     }
 }
 
-void calculatePolygonArea(double n, double m, Eigen::Vector2d normalVec, Eigen::Vector2d p1, Eigen::Vector2d p2, Eigen::Vector2d p3, Eigen::Vector2d p4, std::vector<Eigen::Vector2d>& polygon, bool& isIntersecting){
+void calculatePolygonArea(double n, double m, Eigen::Vector2d normalVec, Eigen::Vector2d p1, Eigen::Vector2d p2, Eigen::Vector2d p3, Eigen::Vector2d p4, std::vector<Eigen::Vector2d>& polygon, bool& isIntersecting, bool xCoordinates){
     const std::vector<Eigen::Vector2d> cell = {
         p1, p2, p3, p4
     }; 
@@ -47,24 +47,24 @@ void calculatePolygonArea(double n, double m, Eigen::Vector2d normalVec, Eigen::
     std::vector<Eigen::Vector2d> polygon1;
     std::vector<Eigen::Vector2d> polygon2;
 
-    if (x(cell[0][1], m, n) > cell[0](0) && x(cell[0][1], m, n) < cell[1](0)) { // top face
-        vertex(0) = x(cell[0](1), m, n);
+    if (x(cell[0][1], m, n, xCoordinates) >= cell[0](0) && x(cell[0][1], m, n, xCoordinates) <= cell[1](0)) { // top face
+        vertex(0) = x(cell[0](1), m, n, xCoordinates);
         vertex(1) = cell[0](1);
         intersectionPoints.push_back(vertex);
     }
-    if (y(cell[1](0), m, n) > cell[2](1) && y(cell[1](0), m, n) < cell[1](1)) { // right face
+    if (y(cell[1](0), m, n, xCoordinates) >= cell[2](1) && y(cell[1](0), m, n, xCoordinates) <= cell[1](1)) { // right face
         vertex(0) = cell[1](0);
-        vertex(1) = y(cell[1](0), m, n);
+        vertex(1) = y(cell[1](0), m, n, xCoordinates);
         intersectionPoints.push_back(vertex);
     }
-    if (x(cell[2](1), m, n) > cell[3](0) && x(cell[2](1), m, n) < cell[2](0)) { // bottom face
-        vertex(0) = x(cell[2](1), m, n);
+    if (x(cell[2](1), m, n, xCoordinates) >= cell[3](0) && x(cell[2](1), m, n, xCoordinates) <= cell[2](0)) { // bottom face
+        vertex(0) = x(cell[2](1), m, n, xCoordinates);
         vertex(1) = cell[2](1);
         intersectionPoints.push_back(vertex);
     }
-    if (y(cell[3](0), m, n) > cell[2](1) && y(cell[3](0), m, n) < cell[0](1)) { // left face
+    if (y(cell[3](0), m, n, xCoordinates) >= cell[2](1) && y(cell[3](0), m, n, xCoordinates) <= cell[0](1)) { // left face
         vertex(0) = cell[3](0);
-        vertex(1) = y(cell[3](0), m, n);
+        vertex(1) = y(cell[3](0), m, n, xCoordinates);
         intersectionPoints.push_back(vertex);
     }
 
@@ -157,9 +157,9 @@ void calculatePolygonArea(double n, double m, Eigen::Vector2d normalVec, Eigen::
     Eigen::Vector2d edgeVec = intersectionPoints[1] - intersectionPoints[0];
     double crossProduct = edgeVec.x()*normalVec.y() - edgeVec.y()*normalVec.x();
     if (crossProduct < 0){
-        polygon = polygon2;
-    } else {
         polygon = polygon1;
+    } else {
+        polygon = polygon2;
     }
 }
 
@@ -194,6 +194,7 @@ double interfaceFlux(Data2D& data, int cellId, std::string direction){
     double dy = curCell.faces[SOUTH]->dx;
 
     double fluxLength = calculateFluxLength(data, cellId, direction);
+    std::cout << "fluxLength: " << fluxLength << std::endl;
 
     if (fluxLength == 0){
         return 0.0;
@@ -212,33 +213,41 @@ double interfaceFlux(Data2D& data, int cellId, std::string direction){
 
     if (direction == "EAST"){
         fluxPoint = dx/2 - fluxLength;
-        Eigen::Vector2d p1 = {fluxPoint, dy/2};
-        Eigen::Vector2d p2 = {dx/2, dy/2};
-        Eigen::Vector2d p3 = {dx/2, -dy/2};
-        Eigen::Vector2d p4 = {fluxPoint, -dy/2};
+        p1 = {fluxPoint, dy/2};
+        p2 = {dx/2, dy/2};
+        p3 = {dx/2, -dy/2};
+        p4 = {fluxPoint, -dy/2};
     } else if (direction == "WEST"){
         fluxPoint = -dx/2 + fluxLength;
-        Eigen::Vector2d p1 = {-dx/2, dy/2};
-        Eigen::Vector2d p2 = {fluxPoint, dy/2};
-        Eigen::Vector2d p3 = {fluxPoint, -dy/2};
-        Eigen::Vector2d p4 = {-dx/2, -dy/2};
+        p1 = {-dx/2, dy/2};
+        p2 = {fluxPoint, dy/2};
+        p3 = {fluxPoint, -dy/2};
+        p4 = {-dx/2, -dy/2};
     } else if (direction == "NORTH"){
         fluxPoint = dy/2 - fluxLength;
-        Eigen::Vector2d p1 = {-dx/2, dy/2};
-        Eigen::Vector2d p2 = {dx/2, dy/2};
-        Eigen::Vector2d p3 = {dx/2, fluxPoint};
-        Eigen::Vector2d p4 = {-dx/2, fluxPoint};
+        p1 = {-dx/2, dy/2};
+        p2 = {dx/2, dy/2};
+        p3 = {dx/2, fluxPoint};
+        p4 = {-dx/2, fluxPoint};
     } else if (direction == "SOUTH"){
         fluxPoint = -dy/2 + fluxLength;
-        Eigen::Vector2d p1 = {-dx/2, fluxPoint};
-        Eigen::Vector2d p2 = {dx/2, fluxPoint};
-        Eigen::Vector2d p3 = {dx/2, -dy/2};
-        Eigen::Vector2d p4 = {-dx/2, -dy/2};
+        p1 = {-dx/2, fluxPoint};
+        p2 = {dx/2, fluxPoint};
+        p3 = {dx/2, -dy/2};
+        p4 = {-dx/2, -dy/2};
     } else {
         std::cerr << "Invalid direction" << std::endl;
         return 0.0;
     }
-    calculatePolygonArea(n, m, InterNormal, p1, p2, p3, p4, polygon, isIntersecting);
+    // std::cout << "fluxPoint: " << fluxPoint << std::endl;
+    // std::cout << "p1: " << p1(0) << " " << p1(1) << std::endl;
+    // std::cout << "p2: " << p2(0) << " " << p2(1) << std::endl;
+    // std::cout << "p3: " << p3(0) << " " << p3(1) << std::endl;
+    // std::cout << "p4: " << p4(0) << " " << p4(1) << std::endl;
+    calculatePolygonArea(n, m, InterNormal, p1, p2, p3, p4, polygon, isIntersecting, curCell.xCoordinates);
+    for (int i = 0; i < polygon.size(); i++){
+        std::cout << "polygon: " << polygon[i](0) << " " << polygon[i](1) << std::endl;
+    }
     if (isIntersecting){
         double liquidArea = shoeLaceFormula(polygon);
         double totalArea = dx*dy;
@@ -256,138 +265,175 @@ double interfaceFlux(Data2D& data, int cellId, std::string direction){
 }
 
 void preformXSweep(Data2D& data){
+    // std::cout << "Performing X sweep" << std::endl;
     std::vector<double> interAlpha;
     for (int i = 0; i < data.nCells; i++){
-        Cell2D curCell = data.cells[i];
+        Cell2D *curCell = &data.cells[i];
         double fe = 0;
         double fw = 0;
-        if (curCell.bType_sc == DIRICHLET || curCell.bType_sc == NEUMANN){
-            interAlpha.push_back(curCell.alpha);
+        if (curCell->bType_sc == DIRICHLET || curCell->bType_sc == NEUMANN){
+            interAlpha.push_back(curCell->alpha);
             continue;
         } else {
-
-            if (curCell.neighCells[EAST]->alpha != 0 && curCell.neighCells[EAST]->alpha != 1){
-                fe = interfaceFlux(data, curCell.neighCells[EAST]->id, "WEST");
+            if (curCell->faces[EAST]->u[CORRECTED_2] > 0){
+                if (curCell->alpha != 0 && curCell->alpha != 1){
+                    fe = interfaceFlux(data, curCell->id, "EAST");
+                    // std::cout << "fe geometrically: " << fe << std::endl; 
+                } else {
+                    fe = curCell->alpha*data.dt*curCell->faces[EAST]->u[CORRECTED_2]*curCell->faces[EAST]->dy;
+                }
             } else {
-                fe = curCell.neighCells[EAST]->alpha*data.dt*curCell.faces[EAST]->u[CORRECTED_2]*curCell.faces[EAST]->dy;
+                if (curCell->neighCells[EAST]->alpha != 0 && curCell->neighCells[EAST]->alpha != 1){
+                    fe = interfaceFlux(data, curCell->neighCells[EAST]->id, "WEST");
+                    // std::cout << "fe geometrically: " << fe << std::endl;
+                } else {
+                    fe = curCell->neighCells[EAST]->alpha*data.dt*curCell->faces[EAST]->u[CORRECTED_2]*curCell->faces[EAST]->dy;
+                }
+            }
+            if (curCell->faces[WEST]->u[CORRECTED_2] < 0){
+                if (curCell->alpha != 0 && curCell->alpha != 1){
+                    fw = interfaceFlux(data, curCell->id, "WEST");
+                    // std::cout << "fw geometrically: " << fw << std::endl;
+                } else {
+                    fw = curCell->alpha*data.dt*curCell->faces[WEST]->u[CORRECTED_2]*curCell->faces[WEST]->dy;
+                }
+            } else {
+                if (curCell->neighCells[WEST]->alpha != 0 && curCell->neighCells[WEST]->alpha != 1){
+                    fw = interfaceFlux(data, curCell->neighCells[WEST]->id, "EAST");
+                    // std::cout << "fw geometrically: " << fw << std::endl;
+                } else {
+                    fw = curCell->neighCells[WEST]->alpha*data.dt*curCell->faces[WEST]->u[CORRECTED_2]*curCell->faces[WEST]->dy;
+                }
             }
 
-            if (curCell.neighCells[WEST]->alpha != 0 && curCell.neighCells[WEST]->alpha != 1){
-                fw = interfaceFlux(data, curCell.neighCells[WEST]->id, "EAST");
-            } else {
-                fw = curCell.neighCells[EAST]->alpha*data.dt*curCell.faces[WEST]->u[CORRECTED_2]*curCell.faces[WEST]->dy;
-            }
-
-            double tmp = (curCell.alpha + std::max(fw, 0.0) - std::max(-fe, 0.0))/(1 - data.dt/curCell.faces[NORTH]->dx*(curCell.faces[WEST]->u[CORRECTED_2] - curCell.faces[EAST]->u[CORRECTED_2]));
+            double tmp = (curCell->alpha + fw - fe)/(1 - (data.dt*(curCell->faces[WEST]->u[CORRECTED_2] - curCell->faces[EAST]->u[CORRECTED_2]))/curCell->faces[NORTH]->dx);
+            // std::cout << "cellId: " << curCell.id << " alpha: " << tmp << std::endl;
             interAlpha.push_back(tmp);
         }
     }
     for (int i = 0; i < data.nCells; i++){
         data.cells[i].alpha = interAlpha[i];
     }
-    std::stack<Cell2D> cornerCells;
+    std::stack<int> cornerCells;
     for (int i = 0; i < data.nCells; i++){
-        Cell2D curCell = data.cells[i];
-        if (curCell.bType_sc == NEUMANN) {
-            if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if (curCell.neighCells[WEST]->bType_sc == SOLID || curCell.neighCells[WEST] == nullptr){
-                curCell.alpha = curCell.neighCells[EAST]->alpha;
-            } else if (curCell.neighCells[EAST]->bType_sc == SOLID || curCell.neighCells[EAST] == nullptr){
-                curCell.alpha = curCell.neighCells[WEST]->alpha;
-            } else if (curCell.neighCells[NORTH]->bType_sc == SOLID || curCell.neighCells[NORTH] == nullptr){
-                curCell.alpha = curCell.neighCells[SOUTH]->alpha;
-            } else if (curCell.neighCells[SOUTH]->bType_sc == SOLID || curCell.neighCells[SOUTH] == nullptr){
-                curCell.alpha = curCell.neighCells[NORTH]->alpha;
+        Cell2D *curCell = &data.cells[i];
+        if (curCell->bType_sc == NEUMANN) {
+            if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+                cornerCells.push(curCell->id);
+            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+                cornerCells.push(curCell->id);
+            } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+                cornerCells.push(curCell->id);
+            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+                cornerCells.push(curCell->id);
+            } else if (curCell->neighCells[WEST] == nullptr ||curCell->neighCells[WEST]->bType_sc == SOLID ){
+                curCell->alpha = curCell->neighCells[EAST]->alpha;
+            } else if (curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID){
+                curCell->alpha = curCell->neighCells[WEST]->alpha;
+            } else if (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID){
+                curCell->alpha = curCell->neighCells[SOUTH]->alpha;
+            } else if (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID){
+                curCell->alpha = curCell->neighCells[NORTH]->alpha;
             }
         }
     }
     while (!cornerCells.empty()){
-        Cell2D curCell = cornerCells.top();
+        int id = cornerCells.top();
+        Cell2D *curCell = &data.cells[id];
         cornerCells.pop();
-        if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
-            curCell.alpha = 0.5 * (curCell.neighCells[WEST]->alpha + curCell.neighCells[SOUTH]->alpha);
-        } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
-            curCell.alpha = 0.5 * (curCell.neighCells[EAST]->alpha + curCell.neighCells[SOUTH]->alpha);
-        } else if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
-            curCell.alpha = 0.5 * (curCell.neighCells[WEST]->alpha + curCell.neighCells[NORTH]->alpha);
-        } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
-            curCell.alpha = 0.5 * (curCell.neighCells[EAST]->alpha + curCell.neighCells[NORTH]->alpha);
+        if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+            curCell->alpha = 0.5 * (curCell->neighCells[WEST]->alpha + curCell->neighCells[SOUTH]->alpha);
+        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+            curCell->alpha = 0.5 * (curCell->neighCells[EAST]->alpha + curCell->neighCells[SOUTH]->alpha);
+        } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+            curCell->alpha = 0.5 * (curCell->neighCells[WEST]->alpha + curCell->neighCells[NORTH]->alpha);
+        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+            curCell->alpha = 0.5 * (curCell->neighCells[EAST]->alpha + curCell->neighCells[NORTH]->alpha);
         }
     }
 }
 
 void preformYSweep(Data2D& data){
+    // std::cout << "Performing Y sweep" << std::endl;
     std::vector<double> interAlpha;
     for (int i = 0; i < data.nCells; i++){
-        Cell2D curCell = data.cells[i];
+        Cell2D *curCell = &data.cells[i];
         double gn = 0;
         double gs = 0;
-        if (curCell.bType_sc == DIRICHLET || curCell.bType_sc == NEUMANN){
-            interAlpha.push_back(curCell.alpha);
+        if (curCell->bType_sc == DIRICHLET || curCell->bType_sc == NEUMANN){
+            interAlpha.push_back(curCell->alpha);
             continue;
         } else {
-                
-                if (curCell.neighCells[NORTH]->alpha != 0 && curCell.neighCells[NORTH]->alpha != 1 && curCell.faces[NORTH]->u[CORRECTED_2] < 0){
-                    gn = interfaceFlux(data, curCell.neighCells[NORTH]->id, "SOUTH");
-                    
+            if (curCell->faces[NORTH]->v[CORRECTED_2] > 0){
+                if (curCell->alpha != 0 && curCell->alpha != 1){
+                    gn = interfaceFlux(data, curCell->id, "NORTH");
                 } else {
-                    gn = curCell.neighCells[NORTH]->alpha*data.dt*curCell.faces[NORTH]->v[CORRECTED_2]*curCell.faces[NORTH]->dx;
+                    gn = curCell->alpha*data.dt*curCell->faces[NORTH]->v[CORRECTED_2]*curCell->faces[NORTH]->dx;
                 }
-    
-                if (curCell.neighCells[SOUTH]->alpha != 0 && curCell.neighCells[SOUTH]->alpha != 1){
-                    gs = interfaceFlux(data, curCell.neighCells[SOUTH]->id, "NORTH");
+            } else {
+                if (curCell->neighCells[NORTH]->alpha != 0 && curCell->neighCells[NORTH]->alpha != 1){
+                    gn = interfaceFlux(data, curCell->neighCells[NORTH]->id, "SOUTH");
                 } else {
-                    gs = curCell.neighCells[SOUTH]->alpha*data.dt*curCell.faces[SOUTH]->v[CORRECTED_2]*curCell.faces[SOUTH]->dx;
+                    gn = curCell->neighCells[NORTH]->alpha*data.dt*curCell->faces[NORTH]->v[CORRECTED_2]*curCell->faces[NORTH]->dx;
                 }
+            }
+            if (curCell->faces[SOUTH]->v[CORRECTED_2] < 0){
+                if (curCell->alpha != 0 && curCell->alpha != 1){
+                    gs = interfaceFlux(data, curCell->id, "SOUTH");
+                } else {
+                    gs = curCell->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
+                }
+            } else {
+                if (curCell->neighCells[SOUTH]->alpha != 0 && curCell->neighCells[SOUTH]->alpha != 1){
+                    gs = interfaceFlux(data, curCell->neighCells[SOUTH]->id, "NORTH");
+                } else {
+                    gs = curCell->neighCells[SOUTH]->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
+                }
+            }
     
-                double tmp = (curCell.alpha + std::max(gs, 0.0) - std::max(-gn, 0.0) + curCell.alpha*data.dt/curCell.faces[WEST]->dy*(curCell.faces[SOUTH]->v[CORRECTED_2] - curCell.faces[NORTH]->v[CORRECTED_2]));
-                interAlpha.push_back(tmp);
+            double tmp = (curCell->alpha + gs - gn + curCell->alpha*data.dt/curCell->faces[WEST]->dy*(curCell->faces[SOUTH]->v[CORRECTED_2] - curCell->faces[NORTH]->v[CORRECTED_2]));
+            // std::cout << "cellId: " << curCell.id << " alpha: " << tmp << std::endl;
+            interAlpha.push_back(tmp);
         }
     }
     for (int i = 0; i < data.nCells; i++){
         data.cells[i].alpha = interAlpha[i];
     }
-    std::stack<Cell2D> cornerCells;
+    std::stack<int> cornerCells;
     for (int i = 0; i < data.nCells; i++){
-        Cell2D curCell = data.cells[i];
-        if (curCell.bType_sc == NEUMANN) {
-            if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if (curCell.neighCells[WEST]->bType_sc == SOLID || curCell.neighCells[WEST] == nullptr){
-                curCell.alpha = curCell.neighCells[EAST]->alpha;
-            } else if (curCell.neighCells[EAST]->bType_sc == SOLID || curCell.neighCells[EAST] == nullptr){
-                curCell.alpha = curCell.neighCells[WEST]->alpha;
-            } else if (curCell.neighCells[NORTH]->bType_sc == SOLID || curCell.neighCells[NORTH] == nullptr){
-                curCell.alpha = curCell.neighCells[SOUTH]->alpha;
-            } else if (curCell.neighCells[SOUTH]->bType_sc == SOLID || curCell.neighCells[SOUTH] == nullptr){
-                curCell.alpha = curCell.neighCells[NORTH]->alpha;
+        Cell2D *curCell = &data.cells[i];
+        if (curCell->bType_sc == NEUMANN) {
+            if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+                cornerCells.push(curCell->id);
+            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+                cornerCells.push(curCell->id);
+            } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+                cornerCells.push(curCell->id);
+            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+                cornerCells.push(curCell->id);
+            } else if (curCell->neighCells[WEST] == nullptr ||curCell->neighCells[WEST]->bType_sc == SOLID ){
+                curCell->alpha = curCell->neighCells[EAST]->alpha;
+            } else if (curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID){
+                curCell->alpha = curCell->neighCells[WEST]->alpha;
+            } else if (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID){
+                curCell->alpha = curCell->neighCells[SOUTH]->alpha;
+            } else if (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID){
+                curCell->alpha = curCell->neighCells[NORTH]->alpha;
             }
         }
     }
     while (!cornerCells.empty()){
-        Cell2D curCell = cornerCells.top();
+        int id = cornerCells.top();
+        Cell2D *curCell = &data.cells[id];
         cornerCells.pop();
-        if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
-            curCell.alpha = 0.5 * (curCell.neighCells[WEST]->alpha + curCell.neighCells[SOUTH]->alpha);
-        } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
-            curCell.alpha = 0.5 * (curCell.neighCells[EAST]->alpha + curCell.neighCells[SOUTH]->alpha);
-        } else if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
-            curCell.alpha = 0.5 * (curCell.neighCells[WEST]->alpha + curCell.neighCells[NORTH]->alpha);
-        } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
-            curCell.alpha = 0.5 * (curCell.neighCells[EAST]->alpha + curCell.neighCells[NORTH]->alpha);
+        if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+            curCell->alpha = 0.5 * (curCell->neighCells[WEST]->alpha + curCell->neighCells[SOUTH]->alpha);
+        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+            curCell->alpha = 0.5 * (curCell->neighCells[EAST]->alpha + curCell->neighCells[SOUTH]->alpha);
+        } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+            curCell->alpha = 0.5 * (curCell->neighCells[WEST]->alpha + curCell->neighCells[NORTH]->alpha);
+        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+            curCell->alpha = 0.5 * (curCell->neighCells[EAST]->alpha + curCell->neighCells[NORTH]->alpha);
         }
     }
     
@@ -395,18 +441,35 @@ void preformYSweep(Data2D& data){
 
 void handleExcessAlpha(Data2D& data){
     for (int i = 0; i < data.nCells; i++){
-        Cell2D curCell = data.cells[i];
-        if (curCell.alpha < 0){
-            curCell.alpha = 0;
-        } else if (curCell.alpha > 1){
-            curCell.alpha = 1;
+        Cell2D *curCell = &data.cells[i];
+        if (curCell->alpha < 0){
+            curCell->alpha = 0;
+            // std::cout << "Negative alpha in cell " << curCell.id << std::endl;
+        } else if (curCell->alpha > 1){
+            curCell->alpha = 1;
+            // std::cout << "Excess alpha in cell " << curCell.id << std::endl;
+            // std::cout << "alpha: " << curCell.alpha << std::endl;
         }
     }
-}          
+}
+
+void assignInitasCorrVel(Data2D& data){
+    for (int i = 0; i < data.nCells; i++){
+        Cell2D *curCell = &data.cells[i];
+        curCell->faces[WEST]->u[CORRECTED_2] = curCell->faces[WEST]->u[0];
+        curCell->faces[EAST]->u[CORRECTED_2] = curCell->faces[EAST]->u[0];
+        curCell->faces[SOUTH]->v[CORRECTED_2] = curCell->faces[SOUTH]->v[0];
+        curCell->faces[NORTH]->v[CORRECTED_2] = curCell->faces[NORTH]->v[0];
+    }
+}
 
     
 
 void advectAlpha(Data2D& data){
+
+    //for testing
+    assignInitasCorrVel(data);
+    
     reconstructInterfaceLines(data);
     preformXSweep(data);
     handleExcessAlpha(data);
