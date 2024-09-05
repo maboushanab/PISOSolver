@@ -243,78 +243,28 @@ void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
         meshFile << "# boundary_vel u v" << std::endl;
         int faceIndex = 0;
         int m = 0; // row index	
-
-        //DDUBLED BOUNDARY CONDITIONS FACES
-        /*
+        std::vector<std::string> faceProp;
+        //initialize faceProp with faceId + 0 0 0
         for (int i = 0; i < (xDim - 1) * yDim + (yDim - 1) * xDim; i++) {
-            if (i > (xDim - 1) * yDim && i % xDim == 0 && i != 0) {
-                m++;
-            }
-            if (i >= (xDim - 1) * yDim - 2 * xDim + 2 && i < (xDim - 1) * yDim) {	            //horizonal faces (bottom boundary)
-                meshFile << faceIndex << " " << keywordValues.at("bottom_vel") << " " << keywordValues.at("bottom_u") << " " << keywordValues.at("bottom_v") << std::endl;
-
-            } else if (i >= (xDim - 1) * yDim + (yDim - 1) * xDim - xDim) {                 //vertical faces (bottom boundary)
-                meshFile << faceIndex << " " << keywordValues.at("bottom_vel") << " " << keywordValues.at("bottom_u") << " " << keywordValues.at("bottom_v") << std::endl;
-
-            } else if (i < 2 * (xDim - 1)) {                                                    //horizontal faces (top boundary)  
-                meshFile << faceIndex << " " << keywordValues.at("top_vel") << " " << keywordValues.at("top_u") << " " << keywordValues.at("top_v") << std::endl;
-
-            } else if (i >= (xDim - 1) * yDim && i < (xDim - 1) * yDim + xDim) {            //vertical faces (top boundary)
-                meshFile << faceIndex << " " << keywordValues.at("top_vel") << " " << keywordValues.at("top_u") << " " << keywordValues.at("top_v") << std::endl;
-
-            } else if (i % (xDim - 1) == 0 && i <= (xDim - 1) * yDim) {                     //horizontal faces (left boundary)
-                meshFile << faceIndex << " " << keywordValues.at("left_vel") << " " << keywordValues.at("left_u") << " " << keywordValues.at("left_v") << std::endl;
-
-            } else if (i % ((xDim - 1) * yDim + xDim * m)  == 0 || i % ((xDim - 1) * yDim + xDim * m)  == 1) {                          //vertical faces (left boundary)
-                meshFile << faceIndex << " " << keywordValues.at("left_vel") << " " << keywordValues.at("left_u") << " " << keywordValues.at("left_v") << std::endl;
-
-            } else if (i % (xDim - 1) == xDim - 2 && i <= (xDim - 1) * yDim) {              //horizontal faces (right boundary)
-                meshFile << faceIndex << " " << keywordValues.at("right_vel") << " " << keywordValues.at("right_u") << " " << keywordValues.at("right_v") << std::endl;
-
-            } else if (i % ((xDim - 1) * yDim + xDim * m - 1) == 0 || i % ((xDim - 1) * yDim + xDim * m - 1) == ((xDim - 1) * yDim + xDim * m - 1) - 1) {               	    //vertical faces (right boundary)
-                meshFile << faceIndex << " " << keywordValues.at("right_vel") << " " << keywordValues.at("right_u") << " " << keywordValues.at("right_v") << std::endl;
-
-            } else {
-                meshFile << faceIndex << " 0 0 0" << std::endl;
-            }
-            faceIndex++;
-        }*/
-        for (int i = 0; i < (xDim - 1) * yDim + (yDim - 1) * xDim; i++) {
-            if (i > (xDim - 1) * yDim && i % xDim == 0 && i != 0) {
-                m++;
-            }
-            if (i >= (xDim - 1) * yDim - xDim + 1 && i < (xDim - 1) * yDim) {	            //horizonal faces (bottom boundary)
-                meshFile << faceIndex << " " << keywordValues.at("top_vel") << " " << keywordValues.at("top_u") << " " << keywordValues.at("top_v") << std::endl;
-
-            } else if (i >= (xDim - 1) * yDim + (yDim - 1) * xDim - xDim) {                 //vertical faces (bottom boundary)
-                meshFile << faceIndex << " " << keywordValues.at("top_vel") << " " << keywordValues.at("top_u") << " " << keywordValues.at("top_v") << std::endl;
-
-            } else if (i < (xDim - 1)) {                                                    //horizontal faces (top boundary)  
-                meshFile << faceIndex << " " << keywordValues.at("bottom_vel") << " " << keywordValues.at("bottom_u") << " " << keywordValues.at("bottom_v") << std::endl;
-
-            } else if (i >= (xDim - 1) * yDim && i < (xDim - 1) * yDim + xDim) {            //vertical faces (top boundary)
-                meshFile << faceIndex << " " << keywordValues.at("bottom_vel") << " " << keywordValues.at("bottom_u") << " " << keywordValues.at("bottom_v") << std::endl;
-
-            } else if (i % (xDim - 1) == 0 && i <= (xDim - 1) * yDim) {                     //horizontal faces (left boundary)
-                meshFile << faceIndex << " " << keywordValues.at("left_vel") << " " << keywordValues.at("left_u") << " " << keywordValues.at("left_v") << std::endl;
-
-            } else if ((i + 1 -(xDim - 1) * yDim) % xDim == 1 && i > (xDim - 1) * yDim) {                          //vertical faces (left boundary)
-                meshFile << faceIndex << " " << keywordValues.at("left_vel") << " " << keywordValues.at("left_u") << " " << keywordValues.at("left_v") << std::endl;
-
-            } else if (i % (xDim - 1) == xDim - 2 && i <= (xDim - 1) * yDim) {              //horizontal faces (right boundary)
-                meshFile << faceIndex << " " << keywordValues.at("right_vel") << " " << keywordValues.at("right_u") << " " << keywordValues.at("right_v") << std::endl;
-
-            } else if ((i + 1 - (xDim - 1) * yDim) % xDim == 0 && i > (xDim - 1) * yDim) {      //vertical faces (right boundary)
-                meshFile << faceIndex << " " << keywordValues.at("right_vel") << " " << keywordValues.at("right_u") << " " << keywordValues.at("right_v") << std::endl;
-
-            } else {
-                meshFile << faceIndex << " 0 0 0" << std::endl;
-            }
-            faceIndex++;
+            faceProp.push_back(std::to_string(faceIndex) + " 0 0 0");
         }
-
+        for (int i = 0; i >= 0 && i < (xDim - 1); i++){
+            faceProp[i] = std::to_string(i) + " " + std::to_string(keywordValues.at("bottom_vel")) + " " + std::to_string(keywordValues.at("bottom_u")) + " " + std::to_string(keywordValues.at("bottom_v"));
+        }
+        for (int i = (xDim - 1) * yDim - xDim + 1; i < (xDim - 1) * yDim; i++){
+            faceProp[i] = std::to_string(i) + " " + std::to_string(keywordValues.at("top_vel")) + " " + std::to_string(keywordValues.at("top_u")) + " " + std::to_string(keywordValues.at("top_v"));
+        }
+        int nHorizonalFaces = (xDim - 1) * yDim;
+        int nVerticalFaces = (yDim - 1) * xDim;
+        for (int i = 0; i <= (yDim - 2); i++){
+            faceProp[nHorizonalFaces + i*xDim] = std::to_string(nHorizonalFaces + i*xDim) + " " + std::to_string(keywordValues.at("left_vel")) + " " + std::to_string(keywordValues.at("left_u")) + " " + std::to_string(keywordValues.at("left_v"));
+            faceProp[nHorizonalFaces + xDim - 1 + i*xDim] = std::to_string(nHorizonalFaces + xDim - 1 + i*xDim) + " " + std::to_string(keywordValues.at("right_vel")) + " " + std::to_string(keywordValues.at("right_u")) + " " + std::to_string(keywordValues.at("right_v")); 
+        }
+        for (int i = 0; i < faceProp.size(); i++) {
+            meshFile << faceProp[i] << std::endl;
+        }
     } else {
-        std::cerr << "Unable to create mesh file." << std::endl;
+        std::cerr << "Unable to open file." << std::endl;
     }
 }
 

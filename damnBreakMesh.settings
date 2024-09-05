@@ -1,0 +1,130 @@
+x
+0.584
+y
+0.584
+dx
+0.0112307692307692
+dy
+0.01168
+
+########################################
+#           Pressure Field
+######################################## 
+
+# Pressure Field 
+# type 0=Constant Pressure 
+# type 1=Pressure Gradient in x
+# type 2=Pressure Gradient in y
+pressure_field_type
+0
+
+# Constant Pressure
+pressure
+0
+
+# Pressure Gradient in x
+pressure_left
+7000
+pressure_right
+2800
+
+#Pressure Gradient in y
+pressure_up
+100
+pressure_down
+200
+
+########################################
+#           Scalar Field
+########################################
+
+# type 0=Constant Scalar 
+# type 1=Scalar Gradient in x
+# type 2=Scalar Gradient in y
+scalar_field_type
+0
+
+# Constant Scalar
+scalar
+0
+
+# Scalar Gradient in x
+scalar_left
+100
+scalar_right
+200
+
+# Scalar Gradient in y
+scalar_up
+0
+scalar_down
+10
+
+########################################
+#           Velocity Field
+########################################
+# For Dirichlet: u = ?, v = ?
+# For Neumann: du/dx = ?, dv/dy = ?
+
+
+# Boundary Conditions
+# type: 1=DIRICHLET
+# type: 2=NEUMANN
+# type: 3=SOLID
+
+# Scalar Boundary Conditions
+
+left_sc
+1
+right_sc
+2
+top_sc
+1
+bottom_sc
+1
+
+# Pressure Boundary Conditions
+
+left_p
+2
+right_p
+1
+top_p
+2
+bottom_p
+2
+
+# Velocity Boundary Conditions
+
+left_vel
+1
+right_vel
+2
+top_vel
+1
+bottom_vel
+1
+
+# Initial Velocity
+
+# x-Direction
+
+left_u
+0
+right_u
+0
+top_u
+0
+bottom_u
+0
+
+# y-Direction
+
+left_v
+0
+right_v
+0
+top_v
+0
+bottom_v
+0 

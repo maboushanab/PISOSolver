@@ -307,7 +307,45 @@ void determinePolygonAsCell(Data2D& data, int cellId, std::vector<Eigen::Vector2
     }
 }
 
-    
+bool checkIntersections(Data2D& data, int cellId, double m, double n){
+    Cell2D *curCell = &data.cells[cellId];
+    double dx = curCell->faces[NORTH]->dx;
+    double dy = curCell->faces[WEST]->dy;
+    bool xCoordinates = curCell->xCoordinates;
+    std::vector<Eigen::Vector2d> cell = {
+        Eigen::Vector2d(-dx/2, dy/2),
+        Eigen::Vector2d(dx/2, dy/2),
+        Eigen::Vector2d(dx/2, -dy/2),
+        Eigen::Vector2d(-dx/2, -dy/2)
+    }; 
+    Eigen::Vector2d vertex;
+    std::vector<Eigen::Vector2d> intersectionPoints;
+    if (x(dy/2, m, n, xCoordinates) >= -dx/2 && x(dy/2, m, n, xCoordinates) <= dx/2) { // top face
+        vertex(0) = x(dy/2, m, n, xCoordinates);
+        vertex(1) = dy/2;
+        intersectionPoints.push_back(vertex);
+    }
+    if (y(dx/2, m, n, xCoordinates) >= -dy/2 && y(dx/2, m, n, xCoordinates) <= dy/2) { // right face
+        vertex(0) = dx/2;
+        vertex(1) = y(dx/2, m, n, xCoordinates);
+        intersectionPoints.push_back(vertex);
+    }
+    if (x(-dy/2, m, n, xCoordinates) >= -dx/2 && x(-dy/2, m, n, xCoordinates) <= dx/2) { // bottom face
+        vertex(0) = x(-dy/2, m, n, xCoordinates);
+        vertex(1) = -dy/2;
+        intersectionPoints.push_back(vertex);
+    }
+    if (y(-dx/2, m, n, xCoordinates) >= -dy/2 && y(-dx/2, m, n, xCoordinates) <= dy/2) { // left face
+        vertex(0) = -dx/2;
+        vertex(1) = y(-dx/2, m, n, xCoordinates);
+        intersectionPoints.push_back(vertex);
+    }
+    if (intersectionPoints.size() == 0){
+        return false;
+    } else {
+        return true;
+    }
+}
 
         
 
@@ -384,6 +422,10 @@ double calcAlphaPrediction(Data2D& data, int cellId, double m, double n, bool pr
  */
 double calcAlphaSensitivity(Data2D& data, int cellId, double m, double n, double alpha){
     double deltaN = 1e-6; // Small perturbation
+    bool intersects = checkIntersections(data, cellId, m, n + deltaN);
+    if (!intersects){
+        return 0;
+    }
     double alphaPerturbed = calcAlphaPrediction(data, cellId, m, n + deltaN, false); // Perturb n
     return (alphaPerturbed - alpha) / deltaN; // Sensitivity
 }
@@ -406,7 +448,7 @@ void estimateInterfaceLine(Data2D& data, int cellId){
     double dy = curCell->faces[WEST]->dy;
     initInterface(data, cellId);
     double m = curCell->interfaceLine.m;
-    double n = curCell->interfaceLine.n;
+    double n = 0;
 
     double alphaPrediction = calcAlphaPrediction(data, cellId, m, n, false);
     double alpha = curCell->alpha;
@@ -418,12 +460,15 @@ void estimateInterfaceLine(Data2D& data, int cellId){
         double sensitivity = calcAlphaSensitivity(data, cellId, m, n, alphaPrediction);
         double nUpdate = alphaDiff * sensitivity * gamma;
         n = n - nUpdate;
-
-        if (abs(n) > dy/2){ // out of bounds check
-            n = dy/2 - 2e-6;
-        } else if (n < -dy/2){
-            n = -dy/2 + 2e-6;
+        
+        bool intersects = checkIntersections(data, cellId, m, n);
+        // Correction if the line goes out of bounds
+        while (!intersects){
+            nUpdate = nUpdate/2;
+            n = n + nUpdate;
+            intersects = checkIntersections(data, cellId, m, n);
         }
+
 
         // Convergence check based on update magnitude
         if (abs(nUpdate) < minUpdate) {

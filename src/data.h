@@ -88,6 +88,7 @@ struct Face2D {
     double a_s;
     double a_p_v;         
     double b;
+    double neighbourSum;
     
     // physical settings
     double u[5];                 // velocity
@@ -177,8 +178,8 @@ struct Data2D {
     int velSolver;                                              //velocity solver type
     int presSolver;                                             //pressure solver type
     bool fixedPressure;                                         //fixed pressure
-    bool bIsZero;                                               //b vector for the PPE LSE is zero
     int mode;                                                   //mode
+    
 
     double alpha_p_relax;                                       //pressure relaxation factor
     double alpha_sc_relax;                                      //scalar relaxation factor
@@ -192,6 +193,13 @@ struct Data2D {
 
     std::stack <double> continuityResiduals;                    //continuity residuals
     std::stack <std::stack<double>> stackOfContinuityResiduals; //stack of continuity residuals
+    double momentumXResidual;                                   //momentum residuals
+    double momentumYResidual;                                   //momentum residuals
+
+    double u_top;                                               //top velocity
+    double u_bottom;                                            //bottom velocity
+    double v_left;                                              //left velocity
+    double v_right;                                             //right velocity
 };
 
 

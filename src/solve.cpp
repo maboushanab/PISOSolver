@@ -3,6 +3,7 @@
 #include "output.h"
 #include "velPredict.h"
 #include "corrector.h"
+#include "alphaAdvection.h"
 #include <iostream>
 
 std::string fSolve(Data2D& data) {
@@ -19,7 +20,7 @@ std::string fSolve(Data2D& data) {
 
         // PISO algorithm
         if (data.mode == 0){            // Transient
-            iterateTransient(data);
+            iterateTransient(data, 1);
         } else {                        // Steady State
             iterateSteady(data, 1);
         }
@@ -27,6 +28,7 @@ std::string fSolve(Data2D& data) {
 
         unstaggerGrid(data, CORRECTED_2);
         fOutputVTKframe(data, directoryName, CORRECTED_2);
+        calcCFL(data);
         resetData(data);
         if (data.mode == 0){
             time += data.dt;
@@ -38,7 +40,9 @@ std::string fSolve(Data2D& data) {
 }
 
 void iterateSteady(Data2D& data, int iteration){
-    predictVelocityField(data);
+    predictXVelocityField(data);
+    predictYVelocityField(data);
+    // predictVelocityField(data);
     if (data.fixedPressure)
     {
         assignVelocities(data, INTERMEDIATE_1);
@@ -46,15 +50,15 @@ void iterateSteady(Data2D& data, int iteration){
         correctPressureEquation(data, INTERMEDIATE_1);
         corrector1(data);
 
-        correctPressureEquation(data, INTERMEDIATE_2);
+        //correctPressureEquation(data, INTERMEDIATE_2);
         corrector2(data);
+        calcNeighbourSums(data);
     }
 
-    //calcScalarTransfer(data);
     checkConvergence(data, iteration);
 }
 
-void iterateTransient(Data2D& data){
+void iterateTransient(Data2D& data, int iteration){
     assignPrevData(data);
     predictVelocityField(data);
 
@@ -64,7 +68,9 @@ void iterateTransient(Data2D& data){
     correctPressureEquation(data, INTERMEDIATE_2);
     corrector2(data);
 
-    //calcScalarTransfer(data);
+    checkConvergence(data, iteration);
+
+    advectAlpha(data);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,11 +168,15 @@ void checkConvergence(Data2D& data, int iteration){
     data.continuityResiduals.push(rmsRes);
     // if (rmsRes > 1e-8 && iteration < data.maxIteration){
     //if (iteration < data.maxIteration){
-    if (rhsConvergence(data) > 1e-8 && iteration < data.maxIteration){
+    if (std::abs((rhsConvergence(data)) > 1e-6 || std::abs(data.momentumXResidual) > 1e-4 || std::abs(data.momentumXResidual) > 1e-4) &&  iteration < data.maxIteration){
         data.stackOfContinuityResiduals.push(data.continuityResiduals);
         iteration++;
         resetData(data);
-        iterateSteady(data, iteration);
+        if (data.mode == 0){
+            iterateTransient(data, iteration);
+        } else {
+            iterateSteady(data, iteration);
+        }
     } else {
         data.stackOfContinuityResiduals.push(data.continuityResiduals);
         while(!data.continuityResiduals.empty()){
@@ -183,7 +193,7 @@ void checkConvergence(Data2D& data, int iteration){
 void unstaggerGrid(Data2D& data, int step) {
     for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
-        curCell->u[step] = 0.5 * (curCell->faces[EAST]->u[step]+ curCell->faces[WEST]->u[step]);
+        curCell->u[step] = 0.5 * (curCell->faces[EAST]->u[step] + curCell->faces[WEST]->u[step]);
         curCell->v[step] = 0.5 * (curCell->faces[NORTH]->v[step] + curCell->faces[SOUTH]->v[step]);
     }
 }
@@ -236,9 +246,38 @@ double rhsConvergence(Data2D data){
         double dx = curCell->faces[SOUTH]->dx;
         double dy = curCell->faces[WEST]->dy;
         if (curCell->bType_p == INNERCELL) {
-            double b = - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[EAST]->alpha)) * 0.5 * curCell->faces[EAST]->u[INTERMEDIATE_1] * dy) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[WEST]->alpha)) * 0.5 *curCell->faces[WEST]->u[INTERMEDIATE_1] * dy) 
-                    - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[NORTH]->alpha))* 0.5 *curCell->faces[NORTH]->v[INTERMEDIATE_1] * dx) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[SOUTH]->alpha))* 0.5 *curCell->faces[SOUTH]->v[INTERMEDIATE_1] * dx);
-            rhs += b; 
+            double rho_e;
+            double rho_w;
+            double rho_n;
+            double rho_s;
+            // Density terms
+            if (curCell->neighCells[EAST] == nullptr) {
+                rho_e = fRho(data, curCell->alpha);
+            } else {
+                rho_e = 0.5 * (fRho(data, curCell->neighCells[EAST]->alpha) + fRho(data, curCell->alpha));
+            }
+            if (curCell->neighCells[WEST] == nullptr) {
+                rho_w = fRho(data, curCell->alpha);
+            } else {
+                rho_w = 0.5 * (fRho(data, curCell->neighCells[WEST]->alpha) + fRho(data, curCell->alpha));
+            }
+            if (curCell->neighCells[NORTH] == nullptr) {
+                rho_n = fRho(data, curCell->alpha);
+            } else {
+                rho_n = 0.5 * (fRho(data, curCell->neighCells[NORTH]->alpha) + fRho(data, curCell->alpha));
+            }
+            if (curCell->neighCells[SOUTH] == nullptr) {
+                rho_s = fRho(data, curCell->alpha);
+            } else {
+                rho_s = 0.5 * (fRho(data, curCell->neighCells[SOUTH]->alpha) + fRho(data, curCell->alpha));
+            }
+
+            double b_e = rho_e * dy * curCell->faces[EAST]->neighbourSum / curCell->faces[EAST]->a_p_tilde;
+            double b_w = rho_w * dy * curCell->faces[WEST]->neighbourSum / curCell->faces[WEST]->a_p_tilde;
+            double b_n = rho_n * dx * curCell->faces[NORTH]->neighbourSum / curCell->faces[NORTH]->a_p_tilde;
+            double b_s = rho_s * dx * curCell->faces[SOUTH]->neighbourSum / curCell->faces[SOUTH]->a_p_tilde;
+            
+            curCell->b = b_e - b_w + b_n - b_s;
         } else if (curCell->bType_p == DIRICHLET || curCell->bType_p == SOLID) {
             double b = curCell->p[CORRECTED_2];
             rhs += b;
@@ -255,5 +294,53 @@ void assignVelocities(Data2D& data, int step){
     }
     for (int i = 0; i < data.nCells; i++) {
         data.cells[i].p[CORRECTED_2] = data.cells[i].p[INITIAL];
+    }
+}
+
+void calcCFL(Data2D& data){
+    double maxCFL = 0;
+    double maxU = 0;
+    double maxDx = 0;
+    for (int i = 0; i < data.nFaces; i++) {
+        Face2D *curFace = &data.faces[i];
+        if(i < data.nhorizontalFaces){
+            double v = curFace->v[CORRECTED_2];
+            double dy = 0;
+            if (curFace->neighCells[UP] != nullptr){
+                dy = curFace->neighCells[UP]->faces[WEST]->dy;
+            } else {
+                dy = curFace->neighCells[DOWN]->faces[WEST]->dy;
+            }
+            // std::cout << "v: " << v << std::endl;
+            // std::cout << "dy: " << dy << std::endl;
+            // std::cout << "dt: " << data.dt << std::endl;
+            double cfl = std::abs(v) * data.dt / dy;
+            if (cfl > maxCFL){
+                maxCFL = cfl;
+                maxDx = dy;
+                maxU = v;
+            } 
+        } else {
+            double u = curFace->u[CORRECTED_2];
+            double dx = 0;
+            if (curFace->neighCells[LEFT] != nullptr){
+                dx = curFace->neighCells[LEFT]->faces[NORTH]->dx;
+            } else {
+                dx = curFace->neighCells[RIGHT]->faces[NORTH]->dx;
+            }
+            // std::cout << "u: " << u << std::endl;
+            // std::cout << "dx: " << dx << std::endl;
+            // std::cout << "dt: " << data.dt << std::endl;
+            double cfl = std::abs(u) * data.dt / dx;
+            if (cfl > maxCFL){
+                maxCFL = cfl;
+                maxDx = dx;
+                maxU = u;
+            }
+        }
+    }
+    std::cout << "CFL: " << maxCFL << std::endl;
+    if (maxCFL > 0.5){
+        data.dt = 0.5 * maxDx / std::abs(maxU);
     }
 }

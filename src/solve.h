@@ -12,21 +12,14 @@ typedef Eigen::VectorXd Vector;
 
 std::string fSolve(Data2D& data);
 void iterateSteady(Data2D& data, int iteration);
-void iterateTransient(Data2D& data);
+void iterateTransient(Data2D& data, int iteration);
 
 // Suplementary functions
 double A(Data2D data, double Pe);
 double fRho(Data2D& data, double alpha);
 double fEta(Data2D& data, double alpha);
 
-// PISO algorithm
-
-
-
-
-
-void computeScalarCoeff(Data2D& data, int cellId);
-void calcScalarTransfer(Data2D& data);
+void calcCFL(Data2D& data);
 
 // Convergence
 double continutyResidual(Data2D& data, int cellId, int step);

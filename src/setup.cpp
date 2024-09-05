@@ -6,6 +6,10 @@ bool fSetup(Data2D& data){
     std::cout << "Setup" << std::endl;
     // face definition
     int k = 0; // face index
+    data.u_bottom = 0;
+    data.u_top = 1;
+    data.v_left = 0;
+    data.v_right = 0;
 
     // horizontal faces
     for (int i = 0; i < data.nPoints; i++) {
@@ -37,7 +41,8 @@ bool fSetup(Data2D& data){
         data.cells[l].points[1] = &data.points[i + 1];
         data.cells[l].points[2] = &data.points[i + data.dimX];
         data.cells[l].points[3] = &data.points[i + data.dimX + 1];
-        //data.cells[l].alpha = 1;
+        data.cells[l].alpha_prev = 0;
+        data.cells[l].alpha = 1;
         // std::cout << "Cell " << data.cells[l].id << ": (" << data.cells[l].points[0]->id << ", " << data.cells[l].points[1]->id << ", " << data.cells[l].points[2]->id << ", " << data.cells[l].points[3]->id << ")" << std::endl;
         l++;
     }
