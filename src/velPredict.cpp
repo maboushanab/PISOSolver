@@ -214,8 +214,8 @@ void setMomentumEquationYMatrix(Data2D& data, SpMat& momMatrix, Vector& momVecto
                 momMatrix.insert(i, j) = curFace->a_s;
             }
         } else if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID) {
-            momMatrix.insert(i, i) = 1.0;
-            momVector(i) = curFace->v[INITIAL];
+            // momMatrix.insert(i, i) = 1.0;
+            // momVector(i) = curFace->v[INITIAL];
         } else if (curFace->bType_u == NEUMANN) {
             momMatrix.insert(i, i) = 1.0;
             if (curFace->neighCells[UP] != nullptr) {               // Bottom Boundary
@@ -471,7 +471,7 @@ void predictXVelocityFieldBiCGStab(Data2D& data) {
         if (solver.info() != Eigen::Success) {
             throw std::runtime_error("Decomposition failed for momMatrix X");
         }
-        Vector solution = solver.solve(momVector);
+        Vector solution = solver.solveWithGuess(momVector, momGuess);
         if (solver.info() == Eigen::NoConvergence) {
             throw std::runtime_error("Solving failed for momMatrix X: No convergence");
         } else if (solver.info() == Eigen::NumericalIssue) {
@@ -487,7 +487,9 @@ void predictXVelocityFieldBiCGStab(Data2D& data) {
             for (int i = data.nhorizontalFaces; i < data.nFaces; i++) {
                 int j = i - data.nhorizontalFaces;
                 Face2D *curFace = &data.faces[i];
-                curFace->u[INTERMEDIATE_1] = solution(j);
+                if(curFace->bType_u != DIRICHLET){
+                    curFace->u[INTERMEDIATE_1] = solution(j);
+                }
             }
         } else {
             std::cerr << "Solving failed for momMatrix X" << std::endl;
@@ -540,7 +542,7 @@ void predictYVelocityFieldBiCGStab(Data2D& data) {
         if (solver.info() != Eigen::Success) {
             throw std::runtime_error("Decomposition failed for momMatrix Y");
         }
-        Vector solution = solver.solve(momVector);
+        Vector solution = solver.solveWithGuess(momVector, momGuess);
         if (solver.info() == Eigen::NoConvergence) {
             throw std::runtime_error("Solving failed for momMatrix Y: No convergence");
         } else if (solver.info() == Eigen::NumericalIssue) {
@@ -556,7 +558,9 @@ void predictYVelocityFieldBiCGStab(Data2D& data) {
         if (solver.info() == Eigen::Success) {
             for (int i = 0; i < data.nhorizontalFaces; i++) {
                 Face2D *curFace = &data.faces[i];
-                curFace->v[INTERMEDIATE_1] = solution(i);
+                if(curFace->bType_u != DIRICHLET){
+                    curFace->v[INTERMEDIATE_1] = solution(i);
+                }
             }
         } else {
             std::cerr << "Solving failed for momMatrix Y" << std::endl;

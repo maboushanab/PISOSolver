@@ -36,36 +36,114 @@ void setPressureMatrix(Data2D& data, SpMat& pressureMatrix, Vector& pressureVect
             pressureMatrix.coeffRef(i, i) = 1.0;
             pressureVector(i) = curCell.p[step - 1];
         } else if (curCell.bType_p == NEUMANN) {
-            pressureMatrix.coeffRef(i, i) = 1.0;
+            pressureVector(i) = curCell.b;
             if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = -0.5;
-                pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = -0.5;
-                pressureVector(i) = 0.5 * (curCell.g_p*curCell.faces[EAST]->dx + curCell.g_p*curCell.faces[NORTH]->dy);
+                pressureMatrix.coeffRef(i, i) = curCell.a_p;
+                if (curCell.neighCells[WEST] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = curCell.a_w;
+                }
+                if (curCell.neighCells[SOUTH] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = curCell.a_s;
+                }
             } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = -0.5;
-                pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = -0.5;
-                pressureVector(i) = -0.5 * (curCell.g_p*curCell.faces[WEST]->dx + curCell.g_p*curCell.faces[NORTH]->dy);
+                pressureMatrix.coeffRef(i, i) = curCell.a_p;
+                if (curCell.neighCells[EAST] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = curCell.a_e;
+                }
+                if (curCell.neighCells[SOUTH] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = curCell.a_s;
+                }
             } else if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = -0.5;
-                pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = -0.5;
-                pressureVector(i) = 0.5 * (curCell.g_p*curCell.faces[EAST]->dx - curCell.g_p*curCell.faces[SOUTH]->dy);
+                pressureMatrix.coeffRef(i, i) = curCell.a_p;
+                if (curCell.neighCells[WEST] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = curCell.a_w;
+                }
+                if (curCell.neighCells[NORTH] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = curCell.a_n;
+                }
             } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = -0.5;
-                pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = -0.5;
-                pressureVector(i) = -0.5 * (curCell.g_p*curCell.faces[WEST]->dx - curCell.g_p*curCell.faces[SOUTH]->dy);
+                pressureMatrix.coeffRef(i, i) = curCell.a_p;
+                if (curCell.neighCells[EAST] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = curCell.a_e;
+                }
+                if (curCell.neighCells[NORTH] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = curCell.a_n;
+                }
             } else if (curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = -1.0;
-                pressureVector(i) = curCell.g_p*curCell.faces[EAST]->dx;
+                pressureMatrix.coeffRef(i, i) = curCell.a_p;
+                if (curCell.neighCells[WEST] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = curCell.a_w;
+                }
+                if (curCell.neighCells[NORTH] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = curCell.a_n;
+                }
+                if (curCell.neighCells[SOUTH] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = curCell.a_s;
+                }
             } else if (curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = -1.0;
-                pressureVector(i) = -curCell.g_p*curCell.faces[WEST]->dx;
+                pressureMatrix.coeffRef(i, i) = curCell.a_p;
+                if (curCell.neighCells[EAST] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = curCell.a_e;
+                }
+                if (curCell.neighCells[NORTH] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = curCell.a_n;
+                }
+                if (curCell.neighCells[SOUTH] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = curCell.a_s;
+                }
             } else if (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = -1.0;
-                pressureVector(i) = curCell.g_p*curCell.faces[NORTH]->dy;
+                pressureMatrix.coeffRef(i, i) = curCell.a_p;
+                if (curCell.neighCells[EAST] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = curCell.a_e;
+                }
+                if (curCell.neighCells[WEST] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = curCell.a_w;
+                }
+                if (curCell.neighCells[SOUTH] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = curCell.a_s;
+                }
             } else if (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID) {
-                pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = -1.0;
-                pressureVector(i) = -curCell.g_p*curCell.faces[SOUTH]->dy;
+                pressureMatrix.coeffRef(i, i) = curCell.a_p;
+                if (curCell.neighCells[EAST] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = curCell.a_e;
+                }
+                if (curCell.neighCells[WEST] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = curCell.a_w;
+                }
+                if (curCell.neighCells[NORTH] != nullptr) {
+                    pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = curCell.a_n;
+                }
             }
+            // pressureMatrix.coeffRef(i, i) = 1.0;
+            // if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = -0.5;
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = -0.5;
+            //     pressureVector(i) = 0.5 * (curCell.g_p*curCell.faces[EAST]->dx + curCell.g_p*curCell.faces[NORTH]->dy);
+            // } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID)) {
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = -0.5;
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = -0.5;
+            //     pressureVector(i) = -0.5 * (curCell.g_p*curCell.faces[WEST]->dx + curCell.g_p*curCell.faces[NORTH]->dy);
+            // } else if ((curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = -0.5;
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = -0.5;
+            //     pressureVector(i) = 0.5 * (curCell.g_p*curCell.faces[EAST]->dx - curCell.g_p*curCell.faces[SOUTH]->dy);
+            // } else if ((curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) && (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID)) {
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = -0.5;
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = -0.5;
+            //     pressureVector(i) = -0.5 * (curCell.g_p*curCell.faces[WEST]->dx - curCell.g_p*curCell.faces[SOUTH]->dy);
+            // } else if (curCell.neighCells[EAST] == nullptr || curCell.neighCells[EAST]->bType_sc == SOLID) {
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[WEST]->id) = -1.0;
+            //     pressureVector(i) = curCell.g_p*curCell.faces[EAST]->dx;
+            // } else if (curCell.neighCells[WEST] == nullptr || curCell.neighCells[WEST]->bType_sc == SOLID) {
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[EAST]->id) = -1.0;
+            //     pressureVector(i) = -curCell.g_p*curCell.faces[WEST]->dx;
+            // } else if (curCell.neighCells[NORTH] == nullptr || curCell.neighCells[NORTH]->bType_sc == SOLID) {
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[SOUTH]->id) = -1.0;
+            //     pressureVector(i) = curCell.g_p*curCell.faces[NORTH]->dy;
+            // } else if (curCell.neighCells[SOUTH] == nullptr || curCell.neighCells[SOUTH]->bType_sc == SOLID) {
+            //     pressureMatrix.coeffRef(i, curCell.neighCells[NORTH]->id) = -1.0;
+            //     pressureVector(i) = -curCell.g_p*curCell.faces[SOUTH]->dy;
+            // }
         }
     }
     // // set corner node of the grid to dirichlet with p = 1
@@ -117,12 +195,27 @@ void computePressureCoeff(Data2D& data, int cellId){
     } else {
         rho_s = 0.5 * (fRho(data, curCell->neighCells[SOUTH]->alpha) + fRho(data, curCell->alpha));
     }
-
-    curCell->a_e = -(rho_e * dy * dy) / curCell->faces[EAST]->a_p_tilde;
-    curCell->a_w = -(rho_w * dy * dy) / curCell->faces[WEST]->a_p_tilde;
-    curCell->a_n = -(rho_n * dx * dx) / curCell->faces[NORTH]->a_p_tilde;
-    curCell->a_s = -(rho_s* dx * dx) / curCell->faces[SOUTH]->a_p_tilde;
-    curCell->a_p = curCell->a_e + curCell->a_w + curCell->a_n + curCell->a_s;
+    if (curCell->neighCells[EAST] == nullptr) {
+        curCell->a_e = 0;
+    } else {
+        curCell->a_e = -(rho_e * dy * dy) / curCell->faces[EAST]->a_p_tilde;
+    }
+    if (curCell->neighCells[WEST] == nullptr) {
+        curCell->a_w = 0;
+    } else {
+        curCell->a_w = -(rho_w * dy * dy) / curCell->faces[WEST]->a_p_tilde;
+    }
+    if (curCell->neighCells[NORTH] == nullptr) {
+        curCell->a_n = 0;
+    } else {
+        curCell->a_n = -(rho_n * dx * dx) / curCell->faces[NORTH]->a_p_tilde;
+    }
+    if (curCell->neighCells[SOUTH] == nullptr) {
+        curCell->a_s = 0;
+    } else {
+        curCell->a_s = -(rho_s * dx * dx) / curCell->faces[SOUTH]->a_p_tilde;
+    }
+    curCell->a_p =  -(curCell->a_e + curCell->a_w + curCell->a_n + curCell->a_s);
     curCell->b =  ((rho_e * curCell->faces[EAST]->u[INTERMEDIATE_1] * dy) - (rho_w *curCell->faces[WEST]->u[INTERMEDIATE_1] * dy) 
     + (rho_n *curCell->faces[NORTH]->v[INTERMEDIATE_1] * dx) - (rho_s * curCell->faces[SOUTH]->v[INTERMEDIATE_1] * dx)); 
     if (data.mode == 0){
@@ -194,27 +287,32 @@ void correctPressureEquationBiCGStab(Data2D& data, int step) {
     Vector pressureCorrVector(data.nCells);
     pressureCorrMatrix.setZero();
     pressureCorrVector.setZero();
+    Vector pressureCorrGuess = Vector::Zero(data.nCells);
+    for (int i = 0; i < data.nCells; i++) {
+        if (step == INTERMEDIATE_1){
+            pressureCorrGuess(i) = data.cells[i].p[INITIAL];
+        } else if (step == INTERMEDIATE_2){
+            pressureCorrGuess(i) = data.cells[i].p[CORRECTED_1];
+        }
+    }
+
 
     for (int i = 0; i < data.nCells; i++) {
-        Cell2D *curCell = &data.cells[i];
-        if (curCell->bType_p == INNERCELL) {
-            if (step == INTERMEDIATE_1){
-                computePressureCoeff(data, i);
-            } else if (step == INTERMEDIATE_2){
-                computePressureCoeff2(data, i);
-            }
-    
+        if (step == INTERMEDIATE_1){
+            computePressureCoeff(data, i);
+        } else if (step == INTERMEDIATE_2){
+            computePressureCoeff2(data, i);
         }
     }
 
     setPressureMatrix(data, pressureCorrMatrix, pressureCorrVector, data.nCells, step);
-    // Eigen::MatrixXd denseA = Eigen::MatrixXd(pressureCorrMatrix);
-    // Eigen::JacobiSVD<Eigen::MatrixXd> svd(denseA);
-    // double cond = svd.singularValues()(0) / svd.singularValues()(svd.singularValues().size() - 1);
-    // std::cout << "Condition number of pressure matrix: " << cond << std::endl;
 
     pressureCorrMatrix.makeCompressed();
-    //calculate condition number of matrix
+    
+    //inital residual
+    Vector residual = pressureCorrVector - pressureCorrMatrix * pressureCorrGuess;
+    double residualNorm = residual.norm();
+    std::cout << "Initial residual: " << residualNorm << std::endl;
 
 
     try {
@@ -227,7 +325,7 @@ void correctPressureEquationBiCGStab(Data2D& data, int step) {
         if (solver.info() != Eigen::Success) {
             throw std::runtime_error("Decomposition failed for pressureCorrMatrix");
         }
-        Vector pressureCorrSolution = solver.solve(pressureCorrVector);
+        Vector pressureCorrSolution = solver.solveWithGuess(pressureCorrVector, pressureCorrGuess);
         if (solver.info() == Eigen::NoConvergence) {
             std::cout << "Iterations: " << solver.iterations();
             std::cout << " || Estimated error: " << solver.error() << std::endl;
@@ -325,52 +423,53 @@ void corrector1(Data2D& data) {
         Cell2D *curCell = &data.cells[i];
         if (curCell->bType_p == DIRICHLET || curCell->bType_p == SOLID) {
             curCell->p[CORRECTED_1] = curCell->p[INITIAL];
-        } else if (curCell->bType_p == NEUMANN){
-            if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
-                cornerCells.push(curCell);
-            } else if (curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) {
-                curCell->p[CORRECTED_1] = curCell->neighCells[WEST]->p[CORRECTED_1] + curCell->g_p * curCell->faces[EAST]->dx;
-            } else if (curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) {
-                curCell->p[CORRECTED_1] = curCell->neighCells[EAST]->p[CORRECTED_1] - curCell->g_p * curCell->faces[WEST]->dx;
-            } else if (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID) {
-                curCell->p[CORRECTED_1] = curCell->neighCells[SOUTH]->p[CORRECTED_1] + curCell->g_p * curCell->faces[NORTH]->dy;
-            } else if (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID) {
-                curCell->p[CORRECTED_1] = curCell->neighCells[NORTH]->p[CORRECTED_1] - curCell->g_p * curCell->faces[SOUTH]->dy;
-            }
-        }
+        } 
+    //  else if (curCell->bType_p == NEUMANN){
+    //         if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+    //             cornerCells.push(curCell);
+    //         } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+    //             cornerCells.push(curCell);
+    //         } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+    //             cornerCells.push(curCell);
+    //         } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+    //             cornerCells.push(curCell);
+    //         } else if (curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) {
+    //             curCell->p[CORRECTED_1] = curCell->neighCells[WEST]->p[CORRECTED_1] + curCell->g_p * curCell->faces[EAST]->dx;
+    //         } else if (curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) {
+    //             curCell->p[CORRECTED_1] = curCell->neighCells[EAST]->p[CORRECTED_1] - curCell->g_p * curCell->faces[WEST]->dx;
+    //         } else if (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID) {
+    //             curCell->p[CORRECTED_1] = curCell->neighCells[SOUTH]->p[CORRECTED_1] + curCell->g_p * curCell->faces[NORTH]->dy;
+    //         } else if (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID) {
+    //             curCell->p[CORRECTED_1] = curCell->neighCells[NORTH]->p[CORRECTED_1] - curCell->g_p * curCell->faces[SOUTH]->dy;
+    //         }
+    //     }
     }
-    // Update Corner Cells
-    while (!cornerCells.empty()){
-        Cell2D *curCell = cornerCells.top();
-        cornerCells.pop();
-        if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
-            curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[WEST]->p[CORRECTED_1] + curCell->neighCells[SOUTH]->p[CORRECTED_1]);
-        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
-            curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[EAST]->p[CORRECTED_1] + curCell->neighCells[SOUTH]->p[CORRECTED_1]);
-        } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
-            curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[WEST]->p[CORRECTED_1] + curCell->neighCells[NORTH]->p[CORRECTED_1]);
-        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
-            curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[EAST]->p[CORRECTED_1] + curCell->neighCells[NORTH]->p[CORRECTED_1]);
-        }
-    }
+    // // Update Corner Cells
+    // while (!cornerCells.empty()){
+    //     Cell2D *curCell = cornerCells.top();
+    //     cornerCells.pop();
+    //     if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+    //         curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[WEST]->p[CORRECTED_1] + curCell->neighCells[SOUTH]->p[CORRECTED_1]);
+    //     } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+    //         curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[EAST]->p[CORRECTED_1] + curCell->neighCells[SOUTH]->p[CORRECTED_1]);
+    //     } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+    //         curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[WEST]->p[CORRECTED_1] + curCell->neighCells[NORTH]->p[CORRECTED_1]);
+    //     } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+    //         curCell->p[CORRECTED_1] = 0.5 * (curCell->neighCells[EAST]->p[CORRECTED_1] + curCell->neighCells[NORTH]->p[CORRECTED_1]);
+    //     }
+    // }
     // data.cells[0].p[CORRECTED_1] = 1.0;
 
     // Update Velocities bzw. faces
-    double alpha_u_relax = 0.3;
+    double alpha_u_relax = 0.1;
     for (int i = 0; i < data.nFaces; i++) {
         Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
             if (i < data.nhorizontalFaces) {
-                curFace->v[CORRECTED_1] = curFace->dx/curFace->a_p_tilde * (curFace->neighCells[DOWN]->p[INTERMEDIATE_1] - curFace->neighCells[UP]->p[INTERMEDIATE_1]);
+                curFace->v[CORRECTED_1] = curFace->dx * (curFace->neighCells[DOWN]->p[INTERMEDIATE_1] - curFace->neighCells[UP]->p[INTERMEDIATE_1])/curFace->a_p_tilde;
                 curFace->v[INTERMEDIATE_2] = alpha_u_relax*curFace->v[CORRECTED_1] + curFace->v[INTERMEDIATE_1];
             } else if (i >= data.nhorizontalFaces) {
-                curFace->u[CORRECTED_1] = curFace->dy/curFace->a_p_tilde * (curFace->neighCells[LEFT]->p[INTERMEDIATE_1] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_1]);
+                curFace->u[CORRECTED_1] = curFace->dy * (curFace->neighCells[LEFT]->p[INTERMEDIATE_1] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_1])/curFace->a_p_tilde;
                 curFace->u[INTERMEDIATE_2] = alpha_u_relax*curFace->u[CORRECTED_1] + curFace->u[INTERMEDIATE_1];
             }   
         } 
