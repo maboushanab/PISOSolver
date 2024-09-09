@@ -241,12 +241,11 @@ void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
         meshFile << std::endl;
         meshFile << "# faces" << std::endl;
         meshFile << "# boundary_vel u v" << std::endl;
-        int faceIndex = 0;
         int m = 0; // row index	
         std::vector<std::string> faceProp;
         //initialize faceProp with faceId + 0 0 0
         for (int i = 0; i < (xDim - 1) * yDim + (yDim - 1) * xDim; i++) {
-            faceProp.push_back(std::to_string(faceIndex) + " 0 0 0");
+            faceProp.push_back(std::to_string(i) + " 0 0 0");
         }
         for (int i = 0; i >= 0 && i < (xDim - 1); i++){
             faceProp[i] = std::to_string(i) + " " + std::to_string(keywordValues.at("bottom_vel")) + " " + std::to_string(keywordValues.at("bottom_u")) + " " + std::to_string(keywordValues.at("bottom_v"));

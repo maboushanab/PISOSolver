@@ -1,6 +1,7 @@
 #include "solve.h"
 #include "data.h"
 #include "velPredict.h"
+#include <unsupported/Eigen/IterativeSolvers>
 
 /**
  * Computes the velocity coefficients in the x-direction for a given face to solve the momentum equation.
@@ -70,23 +71,28 @@ void computeVelocityCoeff_x(Data2D& data, int faceId) {
     curFace->a_n = -(std::abs(rho_N * v_N) - rho_N * v_N)/2 * dx - eta_N * dx / dy;
     curFace->a_s = -(std::abs(rho_S * v_S) + rho_S * v_S)/2 * dx - eta_S * dx / dy;
     curFace->a_p_v = 0.5 * (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->alpha)) * dx * dy / dt;
-    curFace->a_p_tilde = - curFace->a_e - curFace->a_w - curFace->a_n - curFace->a_s;
+    curFace->a_p_tilde = (std::abs(rho_E * u_E) + rho_E * u_E)/2 * dy + eta_E * dy / dx 
+                        + (std::abs(rho_W * u_W) - rho_W * u_W)/2 * dy + eta_W * dy / dx 
+                        + (std::abs(rho_N * v_N) + rho_N * v_N)/2 * dx + eta_N * dx / dy 
+                        + (std::abs(rho_S * v_S) - rho_S * v_S)/2 * dx + eta_S * dx / dy;
     curFace->b = (curFace->neighCells[LEFT]->p[INITIAL] - curFace->neighCells[RIGHT]->p[INITIAL]) * dy;
     if (data.mode == 0){
         curFace->a_p_tilde += curFace->a_p_v;
         curFace->b += curFace->a_p_v * curFace->u_prev;
     }
 
-    if (curFace->neighCells[DOWN]->faces[SOUTH]->bType_u == DIRICHLET){
+    if (curFace->neighCells[LEFT]->faces[SOUTH]->bType_u == DIRICHLET){
+        curFace->a_p_tilde -= (std::abs(rho_S * v_S) - rho_S * v_S)/2 * dx + eta_S * dx / dy;
+        curFace->a_p_tilde += (3 * eta_S * dx) / dy;
         curFace->a_s = 0;
         curFace->a_n -= (eta_S * dx) / (3*dy);
-        curFace->a_p_tilde += (3 * eta_S * dx) / dy;
         curFace->b += (8 * eta_S * dx * data.u_bottom) / (3*dy);
     }
-    if (curFace->neighCells[UP]->faces[NORTH]->bType_u == DIRICHLET){
+    if (curFace->neighCells[RIGHT]->faces[NORTH]->bType_u == DIRICHLET){
+        curFace->a_p_tilde -= (std::abs(rho_N * v_N) + rho_N * v_N)/2 * dx + eta_N * dx / dy;
+        curFace->a_p_tilde += (3 * eta_N * dx) / dy;
         curFace->a_n = 0;
         curFace->a_s -= (eta_N * dx) / (3*dy);
-        curFace->a_p_tilde += (3 * eta_N * dx) / dy;
         curFace->b += (8 * eta_N * dx * data.u_top) / (3*dy);
     }
 }
@@ -116,8 +122,8 @@ void computeVelocityCoeff_y(Data2D& data, int faceId) {
     double u_E = (curFace->neighCells[DOWN]->faces[EAST]->u[INITIAL] + curFace->neighCells[UP]->faces[EAST]->u[INITIAL]) / 2;
 
     // Velocity Terms (V)
-    double v_S = (curFace->v[INITIAL] + curFace->neighCells[DOWN]->v[INITIAL]) / 2;
-    double v_N = (curFace->v[INITIAL] + curFace->neighCells[UP]->v[INITIAL]) / 2;
+    double v_S = (curFace->v[INITIAL] + curFace->neighCells[DOWN]->faces[SOUTH]->v[INITIAL]) / 2;
+    double v_N = (curFace->v[INITIAL] + curFace->neighCells[UP]->faces[NORTH]->v[INITIAL]) / 2;
 
     // Density terms
     if (curFace->neighCells[UP]->neighCells[WEST] == nullptr && curFace->neighCells[DOWN]->neighCells[WEST] == nullptr) {
@@ -162,7 +168,10 @@ void computeVelocityCoeff_y(Data2D& data, int faceId) {
     curFace->a_n = -(std::abs(rho_N * v_N) - rho_N * v_N)/2 * dx - eta_N * dx / dy;
     curFace->a_s = -(std::abs(rho_S * v_S) + rho_S * v_S)/2 * dx - eta_S * dx / dy;
     curFace->a_p_v = 0.5 * (fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[DOWN]->alpha)) * dx * dy / dt;
-    curFace->a_p_tilde = - curFace->a_e - curFace->a_w - curFace->a_n - curFace->a_s;
+    curFace->a_p_tilde = (std::abs(rho_E * u_E) + rho_E * u_E)/2 * dy + eta_E * dy / dx 
+                        + (std::abs(rho_W * u_W) - rho_W * u_W)/2 * dy + eta_W * dy / dx 
+                        + (std::abs(rho_N * v_N) + rho_N * v_N)/2 * dx + eta_N * dx / dy 
+                        + (std::abs(rho_S * v_S) - rho_S * v_S)/2 * dx + eta_S * dx / dy;
     curFace->b = (curFace->neighCells[DOWN]->p[INITIAL] - curFace->neighCells[UP]->p[INITIAL]) * dx;
     //curFace->b -= 9.81 * (fRho(data, curFace->neighCells[UP]->alpha) * dx * curFace->neighCells[UP]->faces[WEST]->dy + fRho(data, curFace->neighCells[DOWN]->alpha) * dx * curFace->neighCells[DOWN]->faces[WEST]->dy) / 2;
     if (data.mode == 0){
@@ -170,16 +179,18 @@ void computeVelocityCoeff_y(Data2D& data, int faceId) {
         curFace->b += curFace->a_p_v * curFace->v_prev;
     }
 
-    if (curFace->neighCells[RIGHT]->faces[EAST]->bType_u == DIRICHLET){
+    if (curFace->neighCells[UP]->faces[EAST]->bType_u == DIRICHLET){
+        curFace->a_p_tilde -= (std::abs(rho_E * u_E) + rho_E * u_E)/2 * dy + eta_E * dy / dx;
+        curFace->a_p_tilde += (3 * eta_E * dy) / dx;
         curFace->a_e = 0;
         curFace->a_w -= (eta_E * dy) / (3*dx);
-        curFace->a_p_tilde += (3 * eta_E * dy) / dx;
         curFace->b += (8 * eta_E * dy * data.v_right) / (3*dx);
     }
-    if (curFace->neighCells[LEFT]->faces[WEST]->bType_u == DIRICHLET){
+    if (curFace->neighCells[UP]->faces[WEST]->bType_u == DIRICHLET){
+        curFace->a_p_tilde -= (std::abs(rho_W * u_W) - rho_W * u_W)/2 * dy + eta_W * dy / dx;
+        curFace->a_p_tilde += (3 * eta_W * dy) / dx;
         curFace->a_w = 0;
         curFace->a_e -= (eta_W * dy) / (3*dx);
-        curFace->a_p_tilde += (3 * eta_W * dy) / dx;
         curFace->b += (8 * eta_W * dy * data.v_left) / (3*dx);
     }
 }
@@ -197,7 +208,7 @@ void setMomentumEquationYMatrix(Data2D& data, SpMat& momMatrix, Vector& momVecto
     for (int i = 0; i < data.nhorizontalFaces; i++) {
         Face2D* curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
-            momMatrix.insert(i, i) = curFace->a_p_tilde;
+            momMatrix.insert(i, i) = curFace->a_p_tilde*1.2;
             momVector(i) = curFace->b;
             if (i > 0) {
                 momMatrix.insert(i, i - 1) = curFace->a_w;
@@ -214,8 +225,8 @@ void setMomentumEquationYMatrix(Data2D& data, SpMat& momMatrix, Vector& momVecto
                 momMatrix.insert(i, j) = curFace->a_s;
             }
         } else if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID) {
-            // momMatrix.insert(i, i) = 1.0;
-            // momVector(i) = curFace->v[INITIAL];
+            momMatrix.insert(i, i) = 1.0;
+            momVector(i) = curFace->v[INITIAL];
         } else if (curFace->bType_u == NEUMANN) {
             momMatrix.insert(i, i) = 1.0;
             if (curFace->neighCells[UP] != nullptr) {               // Bottom Boundary
@@ -237,7 +248,7 @@ for (int k = data.nhorizontalFaces; k < data.nFaces; k++) {
         int i = k - data.nhorizontalFaces;
         Face2D* curFace = &data.faces[k];
         if (curFace->bType_u == INNERCELL) {
-            momMatrix.insert(i, i) = curFace->a_p_tilde;
+            momMatrix.insert(i, i) = curFace->a_p_tilde*1.2;
             momVector(i) = curFace->b;
             if (i > 0) {
                 momMatrix.insert(i, i - 1) = curFace->a_w;
@@ -444,11 +455,12 @@ void predictXVelocityFieldBiCGStab(Data2D& data) {
     momVector.setZero();
     Vector momGuess = Vector::Zero(data.nFaces - data.nhorizontalFaces);
     for (int i = data.nhorizontalFaces; i < data.nFaces; i++) {
-        momGuess(i - data.nhorizontalFaces) = data.faces[i].v[INITIAL];
+        momGuess(i - data.nhorizontalFaces) = data.faces[i].u[INITIAL];
     }
 
     // Set up the momentum equation matrices
     setMomentumEquationXMatrix(data, momMatrix, momVector);
+
 
     //calculate initial residual
     Vector residual = momVector - momMatrix * momGuess;
@@ -464,7 +476,9 @@ void predictXVelocityFieldBiCGStab(Data2D& data) {
 
     try {
         // Solve for uMatrix
-        Eigen::BiCGSTAB<SpMat> solver;
+        Eigen::BiCGSTAB<SpMat, Eigen::DiagonalPreconditioner<double>> solver;
+        //GMRES
+        // Eigen::GMRES<SpMat, Eigen::DiagonalPreconditioner<double>> solver;
         solver.setMaxIterations(10000); // Increase iteration count if needed
         solver.setTolerance(1e-6);     // Adjust the tolerance to balance accuracy and speed
         solver.compute(momMatrix);
@@ -535,7 +549,9 @@ void predictYVelocityFieldBiCGStab(Data2D& data) {
 
     try {
         // Solve for uMatrix
-        Eigen::BiCGSTAB<SpMat> solver;
+        Eigen::BiCGSTAB<SpMat, Eigen::DiagonalPreconditioner<double>> solver;
+        //GMRES
+        // Eigen::GMRES<SpMat, Eigen::DiagonalPreconditioner<double>> solver;
         solver.setMaxIterations(10000); // Increase iteration count if needed
         solver.setTolerance(1e-6);     // Adjust the tolerance to balance accuracy and speed
         solver.compute(momMatrix);

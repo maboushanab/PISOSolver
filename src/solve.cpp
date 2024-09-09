@@ -42,7 +42,6 @@ std::string fSolve(Data2D& data) {
 void iterateSteady(Data2D& data, int iteration){
     predictXVelocityField(data);
     predictYVelocityField(data);
-    // predictVelocityField(data);
     if (data.fixedPressure)
     {
         assignVelocities(data, INTERMEDIATE_1);
@@ -50,9 +49,9 @@ void iterateSteady(Data2D& data, int iteration){
         correctPressureEquation(data, INTERMEDIATE_1);
         corrector1(data);
 
-        //correctPressureEquation(data, INTERMEDIATE_2);
+        // calcNeighbourSums(data);
+        // correctPressureEquation(data, INTERMEDIATE_2);
         corrector2(data);
-        calcNeighbourSums(data);
     }
 
     checkConvergence(data, iteration);
@@ -160,16 +159,10 @@ double continutyResidual(Data2D& data, int cellId, int step){
 }
 
 void checkConvergence(Data2D& data, int iteration){
-    double res = 0.0;
-    for (int i=0; i < data.nCells; i++){
-        res += continutyResidual(data, i, CORRECTED_1);
-    }
-    double rmsRes = sqrt(abs(res)/data.nCells);
-    data.continuityResiduals.push(rmsRes);
-    // if (rmsRes > 1e-8 && iteration < data.maxIteration){
-    //if (iteration < data.maxIteration){
-    if (std::abs((rhsConvergence(data)) > 1e-6 || std::abs(data.momentumXResidual) > 1e-4 || std::abs(data.momentumXResidual) > 1e-4) &&  iteration < data.maxIteration){
-        data.stackOfContinuityResiduals.push(data.continuityResiduals);
+    if (std::abs(std::abs(data.continuityResidual) > 1e-6 || std::abs(data.momentumXResidual) > 1e-4 || std::abs(data.momentumXResidual) > 1e-4) &&  iteration < data.maxIteration){
+        data.continuityResiduals.push_back(std::abs(data.continuityResidual));
+        data.momentumXResiduals.push_back(std::abs(data.momentumXResidual));
+        data.momentumYResiduals.push_back(std::abs(data.momentumYResidual));
         iteration++;
         resetData(data);
         if (data.mode == 0){
@@ -178,10 +171,6 @@ void checkConvergence(Data2D& data, int iteration){
             iterateSteady(data, iteration);
         }
     } else {
-        data.stackOfContinuityResiduals.push(data.continuityResiduals);
-        while(!data.continuityResiduals.empty()){
-            data.continuityResiduals.pop();
-        }
         if (iteration == data.maxIteration){
             std::cout << "Maximum number of iterations reached." << std::endl;
         } else {

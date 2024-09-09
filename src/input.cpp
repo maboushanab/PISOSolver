@@ -41,6 +41,7 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
     data.nCells = (data.dimX - 1) * (data.dimY - 1);
     data.nhorizontalFaces = (data.dimX - 1) * data.dimY;
     data.nverticalFaces = (data.dimY - 1) * data.dimX;
+    std::cout << "dimX: " << data.dimX << ", dimY: " << data.dimY << ", nPoints: " << data.nPoints << ", nFaces: " << data.nFaces << ", nCells: " << data.nCells << ", nhorizontalFaces: " << data.nhorizontalFaces << ", nverticalFaces: " << data.nverticalFaces << std::endl;
     data.points = new Point2D[data.nPoints];
     data.faces = new Face2D[data.nFaces];
     data.cells = new Cell2D[data.nCells];

@@ -191,8 +191,10 @@ struct Data2D {
     double eta1;                                                //viscosity phase 1
     double eta2;                                                //viscosity phase 2
 
-    std::stack <double> continuityResiduals;                    //continuity residuals
-    std::stack <std::stack<double>> stackOfContinuityResiduals; //stack of continuity residuals
+    std::vector<double> continuityResiduals;                    //continuity residuals
+    std::vector<double> momentumXResiduals;                     //momentum residuals
+    std::vector<double> momentumYResiduals;                     //momentum residuals
+    double continuityResidual;                                  //continuity residual
     double momentumXResidual;                                   //momentum residuals
     double momentumYResidual;                                   //momentum residuals
 

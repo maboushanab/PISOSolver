@@ -7,7 +7,7 @@ bool fSetup(Data2D& data){
     // face definition
     int k = 0; // face index
     data.u_bottom = 0;
-    data.u_top = 1;
+    data.u_top = 0.1;
     data.v_left = 0;
     data.v_right = 0;
 

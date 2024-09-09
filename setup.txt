@@ -3,7 +3,7 @@
 # dt 
 0.001
 # maxIteration
-15
+50
 
 # Mode
 # Transient == 0
@@ -36,7 +36,7 @@
 0
 
 # density1 viscosity1
-1 0.01
+1 0.001
 
 # density2 viscosity2
 1 1.48e-5
