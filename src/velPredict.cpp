@@ -208,7 +208,7 @@ void setMomentumEquationYMatrix(Data2D& data, SpMat& momMatrix, Vector& momVecto
     for (int i = 0; i < data.nhorizontalFaces; i++) {
         Face2D* curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
-            momMatrix.insert(i, i) = curFace->a_p_tilde*1.2;
+            momMatrix.insert(i, i) = curFace->a_p_tilde*(1+data.yInertiaDamper);
             momVector(i) = curFace->b;
             if (i > 0) {
                 momMatrix.insert(i, i - 1) = curFace->a_w;
@@ -248,7 +248,7 @@ for (int k = data.nhorizontalFaces; k < data.nFaces; k++) {
         int i = k - data.nhorizontalFaces;
         Face2D* curFace = &data.faces[k];
         if (curFace->bType_u == INNERCELL) {
-            momMatrix.insert(i, i) = curFace->a_p_tilde*1.2;
+            momMatrix.insert(i, i) = curFace->a_p_tilde*(1+data.xInertiaDamper);
             momVector(i) = curFace->b;
             if (i > 0) {
                 momMatrix.insert(i, i - 1) = curFace->a_w;
@@ -281,7 +281,6 @@ for (int k = data.nhorizontalFaces; k < data.nFaces; k++) {
             
             }
         }
-
     }
 }
 
@@ -586,69 +585,6 @@ void predictYVelocityFieldBiCGStab(Data2D& data) {
     }
 }
 
-void predictVelocityFieldBiCGStab(Data2D& data) {
-    std::cout << std::endl;
-    std::cout << "Velocity Prediction using BiCGStab" << std::endl;
-    for (int i = 0; i < data.nFaces; i++) {
-        Face2D *curFace = &data.faces[i];
-        if (curFace->bType_u == INNERCELL) {                        
-            if (i < data.nhorizontalFaces) {
-                computeVelocityCoeff_y(data, i);
-            } else if (i >= data.nhorizontalFaces) {
-                computeVelocityCoeff_x(data, i);
-            }
-        }
-    }
-
-    // Initialize matrices and vectors
-    SpMat momMatrix(data.nFaces, data.nFaces);
-    Vector momVector(data.nFaces);
-    momVector.setZero();
-
-    // Set up the momentum equation matrices
-    setMomentumEquationMatrix(data, momMatrix, momVector);
-
-    // Compress matrices
-    momMatrix.makeCompressed();
-    // std::cout << "momMatrix: " << momMatrix << std::endl;
-    // std::cout << "momVector: " << momVector << std::endl;
-
-    try {
-        // Solve for uMatrix
-        Eigen::BiCGSTAB<SpMat> solver;
-        solver.setMaxIterations(10000); // Increase iteration count if needed
-        solver.setTolerance(1e-6);     // Adjust the tolerance to balance accuracy and speed
-        solver.compute(momMatrix);
-        if (solver.info() != Eigen::Success) {
-            throw std::runtime_error("Decomposition failed for momMatrix");
-        }
-        Vector solution = solver.solve(momVector);
-        if (solver.info() == Eigen::NoConvergence) {
-            throw std::runtime_error("Solving failed for momMatrix: No convergence");
-        } else if (solver.info() == Eigen::NumericalIssue) {
-            throw std::runtime_error("Solving failed for momMatrix: Numerical issues");
-        } else if (solver.info() != Eigen::Success) {
-            throw std::runtime_error("Solving failed for momMatrix");
-        }
-        std::cout << "Iterations: " << solver.iterations();
-        std::cout << " || Estimated error: " << solver.error() << std::endl;
-
-        data.momentumYResidual = solver.error();
-
-
-        // Update the faces with the solution
-        for (int i = 0; i < data.nFaces; i++) {
-            Face2D *curFace = &data.faces[i];
-            if (i < data.nhorizontalFaces) {
-                curFace->v[INTERMEDIATE_1] = solution(i);
-            } else {
-                curFace->u[INTERMEDIATE_1] = solution(i);
-            }
-        }
-    } catch (const std::exception &e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
-}
 
 void predictVelocityFieldSparseLU(Data2D& data) {
     for (int i = 0; i < data.nFaces; i++) {
@@ -764,17 +700,6 @@ void predictVelocityFieldExplicit(Data2D& data) {
     }
 }
 
-void predictVelocityField(Data2D& data){
-    if (data.velSolver == 3){
-        predictVelocityFieldExplicit(data);
-    } else if (data.velSolver == 0){
-        predictVelocityFieldBiCGStab(data);
-    } else if (data.velSolver == 1){
-        predictVelocityFieldSparseLU(data);
-    } else if (data.velSolver == 2){
-        predictVelocityFieldGaussSeidl(data);
-    }
-}
 void predictXVelocityField(Data2D& data){
     if (data.velSolver == 3){
         predictVelocityFieldExplicit(data);

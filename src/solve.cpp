@@ -59,7 +59,8 @@ void iterateSteady(Data2D& data, int iteration){
 
 void iterateTransient(Data2D& data, int iteration){
     assignPrevData(data);
-    predictVelocityField(data);
+    predictXVelocityField(data);
+    predictYVelocityField(data);
 
     correctPressureEquation(data, INTERMEDIATE_1);
     corrector1(data);
@@ -159,10 +160,34 @@ double continutyResidual(Data2D& data, int cellId, int step){
 }
 
 void checkConvergence(Data2D& data, int iteration){
-    if (std::abs(std::abs(data.continuityResidual) > 1e-6 || std::abs(data.momentumXResidual) > 1e-4 || std::abs(data.momentumXResidual) > 1e-4) &&  iteration < data.maxIteration){
+    if (std::abs(std::abs(data.continuityResidual) > 1e-6 || std::abs(data.momentumXResidual) > 1e-4 || std::abs(data.momentumYResidual) > 1e-4) &&  iteration < data.maxIteration){
         data.continuityResiduals.push_back(std::abs(data.continuityResidual));
         data.momentumXResiduals.push_back(std::abs(data.momentumXResidual));
         data.momentumYResiduals.push_back(std::abs(data.momentumYResidual));
+        // if (iteration > 1){
+        //     double prevContinuityResidual = data.continuityResiduals[iteration - 1];
+        //     double prevMomentumXResidual = data.momentumXResiduals[iteration - 1];
+        //     double prevMomentumYResidual = data.momentumYResiduals[iteration - 1];
+        //     if (data.continuityResidual - prevContinuityResidual > 0){
+        //         data.alpha_p_relax = std::max(data.alpha_p_relax - 0.01, 0.1);
+        //     } else {
+        //         data.alpha_p_relax = std::min(data.alpha_p_relax + 0.01, 1.0);
+        //     }
+        //     if (data.momentumXResidual - prevMomentumXResidual > 0){
+        //         data.alpha_u_relax = std::max(data.alpha_u_relax - 0.01, 0.1);
+        //         data.xInertiaDamper = std::max(data.xInertiaDamper - 0.01, 0.1);
+        //     } else {
+        //         data.alpha_u_relax = std::min(data.alpha_u_relax + 0.01, 1.0);
+        //         data.xInertiaDamper = std::min(data.xInertiaDamper + 0.01, 1.0);
+        //     }
+        //     if (data.momentumYResidual - prevMomentumYResidual > 0){
+        //         data.alpha_v_relax = std::max(data.alpha_v_relax - 0.01, 0.1);
+        //         data.yInertiaDamper = std::max(data.yInertiaDamper - 0.01, 0.1);
+        //     } else {
+        //         data.alpha_v_relax = std::min(data.alpha_v_relax + 0.01, 1.0);
+        //         data.yInertiaDamper = std::min(data.yInertiaDamper + 0.01, 1.0);
+        //     }
+        // }
         iteration++;
         resetData(data);
         if (data.mode == 0){
@@ -203,20 +228,24 @@ void assignPrevData(Data2D& data){
 }
 
 void resetData(Data2D& data) {
+    double pressureRest = 0;
+    double momentumXRest = 0;
+    double momentumYRest = 0;
     for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
-        if (curCell->bType_p == INNERCELL) {
+        if (curCell->bType_p == INNERCELL || curCell->bType_p == NEUMANN) {
+            pressureRest += std::abs(curCell->p[CORRECTED_2] - curCell->p[INITIAL]);
             curCell->p[INITIAL] = curCell->p[CORRECTED_2];
         } else if (curCell->bType_p == DIRICHLET || curCell->bType_p == SOLID) {
             continue;
-        } else if (curCell->bType_p == NEUMANN) {
-            curCell->p[INITIAL] = curCell->p[CORRECTED_2];
         }
 
     }
     for (int i = 0; i < data.nFaces; i++) {
         Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
+            momentumXRest += std::abs(curFace->u[CORRECTED_2] - curFace->u[INITIAL]);
+            momentumYRest += std::abs(curFace->v[CORRECTED_2] - curFace->v[INITIAL]);
             curFace->u[INITIAL] = curFace->u[CORRECTED_2];
             curFace->v[INITIAL] = curFace->v[CORRECTED_2];
         } else if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID) {
@@ -226,6 +255,11 @@ void resetData(Data2D& data) {
             curFace->v[INITIAL] = curFace->v[CORRECTED_2];
         }
     }
+
+    std::cout << std::endl << "Pressure residual: " << pressureRest << std::endl;
+    std::cout << "Momentum X residual: " << momentumXRest << std::endl;
+    std::cout << "Momentum Y residual: " << momentumYRest << std::endl;
+    std::cout << std::endl << "======================================" << std::endl;
 }
 
 double rhsConvergence(Data2D data){

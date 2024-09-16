@@ -185,6 +185,8 @@ struct Data2D {
     double alpha_sc_relax;                                      //scalar relaxation factor
     double alpha_u_relax;                                       //velocity relaxation factor
     double alpha_v_relax;                                       //velocity relaxation factor
+    double xInertiaDamper;                                       //inertia damper
+    double yInertiaDamper;                                       //inertia damper
 
     double rho1;                                                //density phase 1
     double rho2;                                                //density phase 2

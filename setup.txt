@@ -36,7 +36,16 @@
 0
 
 # density1 viscosity1
-1 0.001
+1000 0.01
 
 # density2 viscosity2
 1 1.48e-5
+
+# inertia dampening
+0.2
+
+# pressure under-relaxation
+0.2
+
+# velocity under-relaxation
+0.8

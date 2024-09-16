@@ -60,6 +60,7 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
         data.cells[p].id = (int)numbers[i];
         data.cells[p].bType_sc = (int)numbers[i+1];
         data.cells[p].bType_p = (int)numbers[i+2];
+        data.cells[p].bType_p = 0;
         // data.cells[p].bType_p = 0;
         if (data.cells[p].bType_p == DIRICHLET || data.cells[p].bType_p == INNERCELL){
             data.cells[p].p[INITIAL] = numbers[i+3];
@@ -153,6 +154,12 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
     data.eta1 = numbers_setup[9];
     data.rho2 = numbers_setup[10];
     data.eta2 = numbers_setup[11];
+    data.xInertiaDamper = numbers_setup[12];
+    data.yInertiaDamper = numbers_setup[12];
+    data.alpha_p_relax = numbers_setup[13];
+    data.alpha_u_relax = numbers_setup[14];
+    data.alpha_v_relax = numbers_setup[14];
+
 
     return 0;
 }
