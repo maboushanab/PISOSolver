@@ -508,7 +508,7 @@ void reconstructInterfaceLines(Data2D& data){
     for (int i = 0; i < data.nCells; i++){
         Cell2D *curCell = &data.cells[i];
         if (curCell->alpha > 0 && curCell->alpha < 1){
-            if (curCell->bType_sc == INNERCELL){
+            if (curCell->bType_p != SOLID){
                 calcAlphaNormalVector3x3(data, i);
                 estimateInterfaceLine(data, i);
                 calcAlphaPrediction(data, i, curCell->interfaceLine.m, curCell->interfaceLine.n, false);

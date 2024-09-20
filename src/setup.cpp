@@ -1,15 +1,37 @@
 #include <iostream>
 #include <vector>
 #include "data.h"
+#include <fstream>
 
-bool fSetup(Data2D& data){
+bool fSetup(const char* alphaFilePath, Data2D& data){
     std::cout << "Setup" << std::endl;
+    std::vector<int> alphaPointIds;
+    if (alphaFilePath != nullptr) {
+        std::ifstream file(alphaFilePath);
+        // put all integers line by line into a new entry in the vector
+        if (!file.is_open()) {
+            std::cerr << "Error opening file: " << alphaFilePath << std::endl;
+            return 1;
+        }
+        std::string line;
+
+        // Read the file line by line
+        while (std::getline(file, line)) {
+            std::istringstream iss(line); // Create a string stream for each line
+            int alphaPointId;
+
+            // Extract integers from the line and add them to the vector
+            while (iss >> alphaPointId) {
+                alphaPointIds.push_back(alphaPointId);
+            }
+        }
+
+        file.close(); // Close the file when done
+    }
+    
+
     // face definition
     int k = 0; // face index
-    data.u_bottom = 0;
-    data.u_top = 0.1;
-    data.v_left = 0;
-    data.v_right = 0;
 
     // horizontal faces
     for (int i = 0; i < data.nPoints; i++) {
@@ -42,10 +64,25 @@ bool fSetup(Data2D& data){
         data.cells[l].points[2] = &data.points[i + data.dimX];
         data.cells[l].points[3] = &data.points[i + data.dimX + 1];
         data.cells[l].alpha_prev = 0;
-        data.cells[l].alpha = 1;
+        // data.cells[l].alpha = 1;
         // std::cout << "Cell " << data.cells[l].id << ": (" << data.cells[l].points[0]->id << ", " << data.cells[l].points[1]->id << ", " << data.cells[l].points[2]->id << ", " << data.cells[l].points[3]->id << ")" << std::endl;
         l++;
     }
+    for (int i = 0; i < data.nCells; i++) {
+        int pointCounter = 0;
+        double p = 0;
+        for (int k = 0; k < 4; k++){
+            for (int j = 0; j<alphaPointIds.size(); j++) {
+                if (data.cells[i].points[k]->id == alphaPointIds[j]) {
+                    pointCounter++;
+                }
+            }
+        }
+        if (pointCounter == 4) {
+            data.cells[i].alpha = 1;
+        }
+    }
+        
 
     // face-cell connection
     int m=0; // row index
@@ -149,13 +186,24 @@ bool fSetup(Data2D& data){
         data.faces[i].dy = abs(data.faces[i].points[0]->y - data.faces[i].points[1]->y);
     }
     // cell volumes and centers (Cartesian grid only)
+    bool isInside = false;
+    double p = 0;
     for (int i = 0; i < data.nCells; i++){
         data.cells[i].vol = data.cells[i].faces[0]->dx * data.cells[i].faces[2]->dy;
         data.cells[i].x = data.cells[i].faces[2]->x;
         data.cells[i].y = data.cells[i].faces[0]->y;
         data.cells[i].interfaceLine.m = 0;
         data.cells[i].interfaceLine.n = 0;
+        if (data.cells[data.nCells - 1 - i].alpha == 1){
+            if(!isInside){
+                isInside = true;
+                p += data.rho1*9.81*data.cells[data.nCells - 1 - i].faces[WEST]->dy;
+            }
+            data.cells[data.nCells - 1 - i].p[INITIAL] = p;
+        } else {
+            isInside = false;
+        }
     }
 
-    return true;
+    return true; 
 }

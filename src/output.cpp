@@ -77,23 +77,11 @@ bool fOutputVTKframe(Data2D& data, std::string finalDirectoryName, int step) {
     for (int i = 0; i < data.nCells; ++i) {
         outputFile << data.cells[i].alpha << std::endl;
     }
-    // Write the cell data (sc)
-    outputFile << "SCALARS sc float" << std::endl;
-    outputFile << "LOOKUP_TABLE default" << std::endl;
-    for (int i = 0; i < data.nCells; ++i) {
-        outputFile << data.cells[i].sc << std::endl;
-    }
     // Write the cell data (p)
     outputFile << "SCALARS p float" << std::endl;
     outputFile << "LOOKUP_TABLE default" << std::endl;
     for (int i = 0; i < data.nCells; ++i) {
         outputFile << data.cells[i].p[step] << std::endl;
-    }
-    // Write the cell data (bType_sc)
-    outputFile << "SCALARS bType_sc int" << std::endl;
-    outputFile << "LOOKUP_TABLE default" << std::endl;
-    for (int i = 0; i < data.nCells; ++i) {
-        outputFile << data.cells[i].bType_sc << std::endl;
     }
     // Write the cell data (bType_p)
     outputFile << "SCALARS bType_p int" << std::endl;
@@ -115,45 +103,4 @@ bool fOutputVTKframe(Data2D& data, std::string finalDirectoryName, int step) {
     outputFile.close();
 
     return true;
-}
-
-void jsonOutput(Data2D& data) {
-    std::ofstream outputFile("output.json");
-    if (!outputFile) {
-        std::cerr << "Error opening output file!" << std::endl;
-        return;
-    }
-
-    outputFile << "{" << std::endl;
-    outputFile << "  \"timeStep\": " << data.timeStep << "," << std::endl;
-    outputFile << "  \"nPoints\": " << data.nPoints << "," << std::endl;
-    outputFile << "  \"nCells\": " << data.nCells << "," << std::endl;
-    outputFile << "  \"points\": [" << std::endl;
-    for (int i=0; i<data.nPoints; i++) {
-        outputFile << "    {\"id\": " << data.points[i].id << ", \"x\": " << data.points[i].x << ", \"y\": " << data.points[i].y << "}";
-        if (i < data.nPoints - 1) {
-            outputFile << ",";
-        }
-        outputFile << std::endl;
-    }
-    outputFile << "  ]," << std::endl;
-    outputFile << "  \"cells\": [" << std::endl;
-    for (int i=0; i<data.nCells; i++) {
-        outputFile << "    {\"id\": " << data.cells[i].id << ", \"alpha\": " << data.cells[i].alpha << ", \"sc\": " << data.cells[i].sc << ", \"p\": " << data.cells[i].p[CORRECTED_1] << ", \"bType_sc\": " << data.cells[i].bType_sc << ", \"bType_p\": " << data.cells[i].bType_p << ", \"u\": " << data.cells[i].u[CORRECTED_1] << ", \"v\": " << data.cells[i].v[CORRECTED_1] << ", \"faces\": [";
-        for (int j=0; j<4; j++) {
-            outputFile << "{\"id\": " << data.cells[i].faces[j]->id << ", \"type\": " << data.cells[i].faces[j]->bType_u << "}";
-            if (j < 3) {
-                outputFile << ",";
-            }
-        }
-        outputFile << "]}";
-        if (i < data.nCells - 1) {
-            outputFile << ",";
-        }
-        outputFile << std::endl;
-    }
-    outputFile << "  ]" << std::endl;
-    outputFile << "}" << std::endl;
-
-    outputFile.close();
 }

@@ -12,7 +12,7 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
     std::ifstream inputFile(inputFilePath); 
 
     if (!inputFile) {
-        std::cerr << "Failed to open the file." << std::endl;
+        std::cerr << "Failed to open the file. 1" << std::endl;
         return 1;
     }
 
@@ -56,31 +56,24 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
         j++;
     }
     int p = 0; // cell index
-    for (int i = 2 + data.nPoints*3; i < 2 + data.nPoints*3 + data.nCells*5; i+=5) {
+    for (int i = 2 + data.nPoints*3; i < 2 + data.nPoints*3 + data.nCells*3; i+=3) {
         data.cells[p].id = (int)numbers[i];
-        data.cells[p].bType_sc = (int)numbers[i+1];
-        data.cells[p].bType_p = (int)numbers[i+2];
+        data.cells[p].bType_p = (int)numbers[i+1];
         data.cells[p].bType_p = 0;
         // data.cells[p].bType_p = 0;
         if (data.cells[p].bType_p == DIRICHLET || data.cells[p].bType_p == INNERCELL){
-            data.cells[p].p[INITIAL] = numbers[i+3];
+            data.cells[p].p[INITIAL] = numbers[i+2];
         } else if (data.cells[p].bType_p == NEUMANN){
-            data.cells[p].p[INITIAL] = numbers[i+3];
+            data.cells[p].p[INITIAL] = numbers[i+2];
             // data.cells[p].g_p = numbers[i+3];
             data.cells[p].g_p = 0;
         }
-        if (data.cells[p].bType_sc == DIRICHLET || data.cells[p].bType_sc == INNERCELL){
-            data.cells[p].alpha = numbers[i+4];
-        } else if (data.cells[p].bType_sc == NEUMANN){
-            data.cells[p].alpha = numbers[i+4];
-            // data.cells[p].g_sc = numbers[i+4];
-            data.cells[p].g_sc = 0;
-        }
+        data.cells[p].alpha = 0;
         // std::cout << "Cell " << data.cells[p].id << ": alpha = " << data.cells[p].alpha << ", bType_sc = " << data.cells[p].bType_sc << ", bType_p = " << data.cells[p].bType_p << ", sc = " << data.cells[p].sc << ", p = " << data.cells[p].p[INITIAL] << std::endl;
         p++;
     }
     p = 0; // face index
-    for (int i=2+data.nPoints*3+data.nCells*5; i < 2+data.nPoints*3+data.nCells*5+data.nFaces*4; i+=4) {
+    for (int i=2+data.nPoints*3+data.nCells*3; i < 2+data.nPoints*3+data.nCells*3+data.nFaces*4; i+=4) {
         data.faces[p].id = (int)numbers[i];
         data.faces[p].bType_u = (int)numbers[i+1];
         if (data.faces[p].bType_u == DIRICHLET || data.faces[p].bType_u == INNERCELL){
@@ -103,7 +96,7 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
     std::ifstream secondInputFile(setupFilePath);
 
     if (!secondInputFile) {
-        std::cerr << "Failed to open the file." << std::endl;
+        std::cerr << "Failed to open the file. 2" << std::endl;
         return 1;
     }
 
@@ -159,6 +152,10 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
     data.alpha_p_relax = numbers_setup[13];
     data.alpha_u_relax = numbers_setup[14];
     data.alpha_v_relax = numbers_setup[14];
+    data.u_top = numbers_setup[15];
+    data.u_bottom = numbers_setup[16];
+    data.v_left = numbers_setup[17];
+    data.v_right = numbers_setup[18];
 
 
     return 0;

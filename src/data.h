@@ -121,12 +121,10 @@ struct Cell2D {
     Eigen::Vector2d interfaceMidPoint; //point on the interface line
 
     // numeric quantities
-    int     bType_sc;         // scalar boundary type (alpha)
     int     bType_p;   	       // pressure boundary type
 
     // physical quantities
     double	 vol;           // cell volume
-    double	 sc;             // scalar at cell center
     double 	 p[5];		    // pressure at cell center
 
 
@@ -152,7 +150,6 @@ struct Cell2D {
     double b_sc;
 
     double g_p = 0;             // pressure gradient
-    double g_sc = 0;            // scalar gradient
 
 };
 
@@ -199,6 +196,9 @@ struct Data2D {
     double continuityResidual;                                  //continuity residual
     double momentumXResidual;                                   //momentum residuals
     double momentumYResidual;                                   //momentum residuals
+    std::vector<double> pIterationRes;                          //pressure iteration residuals
+    std::vector<double> uIterationRes;                          //velocity iteration residuals
+    std::vector<double> vIterationRes;                          //velocity iteration residuals
 
     double u_top;                                               //top velocity
     double u_bottom;                                            //bottom velocity

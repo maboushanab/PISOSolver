@@ -271,7 +271,7 @@ void preformXSweep(Data2D& data){
         Cell2D *curCell = &data.cells[i];
         double fe = 0;
         double fw = 0;
-        if (curCell->bType_sc == DIRICHLET || curCell->bType_sc == NEUMANN){
+        if (curCell->bType_p == DIRICHLET || curCell->bType_p == NEUMANN){
             interAlpha.push_back(curCell->alpha);
             continue;
         } else {
@@ -321,22 +321,22 @@ void preformXSweep(Data2D& data){
     std::stack<int> cornerCells;
     for (int i = 0; i < data.nCells; i++){
         Cell2D *curCell = &data.cells[i];
-        if (curCell->bType_sc == NEUMANN) {
-            if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+        if (curCell->bType_p == NEUMANN) {
+            if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_p == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_p == SOLID)) {
                 cornerCells.push(curCell->id);
-            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_p == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_p == SOLID)) {
                 cornerCells.push(curCell->id);
-            } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+            } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_p == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_p == SOLID)) {
                 cornerCells.push(curCell->id);
-            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_p == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_p == SOLID)) {
                 cornerCells.push(curCell->id);
-            } else if (curCell->neighCells[WEST] == nullptr ||curCell->neighCells[WEST]->bType_sc == SOLID ){
+            } else if (curCell->neighCells[WEST] == nullptr ||curCell->neighCells[WEST]->bType_p == SOLID ){
                 curCell->alpha = curCell->neighCells[EAST]->alpha;
-            } else if (curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID){
+            } else if (curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_p == SOLID){
                 curCell->alpha = curCell->neighCells[WEST]->alpha;
-            } else if (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID){
+            } else if (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_p == SOLID){
                 curCell->alpha = curCell->neighCells[SOUTH]->alpha;
-            } else if (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID){
+            } else if (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_p == SOLID){
                 curCell->alpha = curCell->neighCells[NORTH]->alpha;
             }
         }
@@ -345,13 +345,13 @@ void preformXSweep(Data2D& data){
         int id = cornerCells.top();
         Cell2D *curCell = &data.cells[id];
         cornerCells.pop();
-        if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+        if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_p == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_p == SOLID)) {
             curCell->alpha = 0.5 * (curCell->neighCells[WEST]->alpha + curCell->neighCells[SOUTH]->alpha);
-        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_p == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_p == SOLID)) {
             curCell->alpha = 0.5 * (curCell->neighCells[EAST]->alpha + curCell->neighCells[SOUTH]->alpha);
-        } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+        } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_p == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_p == SOLID)) {
             curCell->alpha = 0.5 * (curCell->neighCells[WEST]->alpha + curCell->neighCells[NORTH]->alpha);
-        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_p == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_p == SOLID)) {
             curCell->alpha = 0.5 * (curCell->neighCells[EAST]->alpha + curCell->neighCells[NORTH]->alpha);
         }
     }
@@ -364,7 +364,7 @@ void preformYSweep(Data2D& data){
         Cell2D *curCell = &data.cells[i];
         double gn = 0;
         double gs = 0;
-        if (curCell->bType_sc == DIRICHLET || curCell->bType_sc == NEUMANN){
+        if (curCell->bType_p == DIRICHLET || curCell->bType_p == NEUMANN){
             interAlpha.push_back(curCell->alpha);
             continue;
         } else {
@@ -410,22 +410,22 @@ void preformYSweep(Data2D& data){
     std::stack<int> cornerCells;
     for (int i = 0; i < data.nCells; i++){
         Cell2D *curCell = &data.cells[i];
-        if (curCell->bType_sc == NEUMANN) {
-            if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+        if (curCell->bType_p == NEUMANN) {
+            if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_p == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_p == SOLID)) {
                 cornerCells.push(curCell->id);
-            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_p == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_p == SOLID)) {
                 cornerCells.push(curCell->id);
-            } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+            } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_p == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_p == SOLID)) {
                 cornerCells.push(curCell->id);
-            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+            } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_p == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_p == SOLID)) {
                 cornerCells.push(curCell->id);
-            } else if (curCell->neighCells[WEST] == nullptr ||curCell->neighCells[WEST]->bType_sc == SOLID ){
+            } else if (curCell->neighCells[WEST] == nullptr ||curCell->neighCells[WEST]->bType_p == SOLID ){
                 curCell->alpha = curCell->neighCells[EAST]->alpha;
-            } else if (curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID){
+            } else if (curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_p == SOLID){
                 curCell->alpha = curCell->neighCells[WEST]->alpha;
-            } else if (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID){
+            } else if (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_p == SOLID){
                 curCell->alpha = curCell->neighCells[SOUTH]->alpha;
-            } else if (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID){
+            } else if (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_p == SOLID){
                 curCell->alpha = curCell->neighCells[NORTH]->alpha;
             }
         }
@@ -434,13 +434,13 @@ void preformYSweep(Data2D& data){
         int id = cornerCells.top();
         Cell2D *curCell = &data.cells[id];
         cornerCells.pop();
-        if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+        if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_p == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_p == SOLID)) {
             curCell->alpha = 0.5 * (curCell->neighCells[WEST]->alpha + curCell->neighCells[SOUTH]->alpha);
-        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_sc == SOLID)) {
+        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_p == SOLID) && (curCell->neighCells[NORTH] == nullptr || curCell->neighCells[NORTH]->bType_p == SOLID)) {
             curCell->alpha = 0.5 * (curCell->neighCells[EAST]->alpha + curCell->neighCells[SOUTH]->alpha);
-        } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+        } else if ((curCell->neighCells[EAST] == nullptr || curCell->neighCells[EAST]->bType_p == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_p == SOLID)) {
             curCell->alpha = 0.5 * (curCell->neighCells[WEST]->alpha + curCell->neighCells[NORTH]->alpha);
-        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_sc == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_sc == SOLID)) {
+        } else if ((curCell->neighCells[WEST] == nullptr || curCell->neighCells[WEST]->bType_p == SOLID) && (curCell->neighCells[SOUTH] == nullptr || curCell->neighCells[SOUTH]->bType_p == SOLID)) {
             curCell->alpha = 0.5 * (curCell->neighCells[EAST]->alpha + curCell->neighCells[NORTH]->alpha);
         }
     }

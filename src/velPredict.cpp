@@ -65,35 +65,59 @@ void computeVelocityCoeff_x(Data2D& data, int faceId) {
     double dy = curFace->dy;
     double dt = data.dt;
 
+    double Pe_e = (rho_E * u_E * dx) / eta_E;
+    double Pe_w = (rho_W * u_W * dx) / eta_W;
+    double Pe_n = (rho_N * v_N * dy) / eta_N;
+    double Pe_s = (rho_S * v_S * dy) / eta_S;
+
+    double f_e = rho_E * u_E * dy;
+    double f_w = rho_W * u_W * dy;
+    double f_n = rho_N * v_N * dx;
+    double f_s = rho_S * v_S * dx;
+
     // Compute the coefficients
-    curFace->a_e = -(std::abs(rho_E * u_E) - rho_E * u_E)/2 * dy - eta_E * dy / dx;
-    curFace->a_w = -(std::abs(rho_W * u_W) + rho_W * u_W)/2 * dy - eta_W * dy / dx;
-    curFace->a_n = -(std::abs(rho_N * v_N) - rho_N * v_N)/2 * dx - eta_N * dx / dy;
-    curFace->a_s = -(std::abs(rho_S * v_S) + rho_S * v_S)/2 * dx - eta_S * dx / dy;
+    curFace->a_e = -std::max(-f_e, 0.0) - A(data, Pe_e) * eta_E * dy / dx;
+    curFace->a_w = -std::max(f_w, 0.0) - A(data, Pe_w) * eta_W * dy / dx;
+    curFace->a_n = -std::max(-f_n, 0.0) - A(data, Pe_n) * eta_N * dx / dy;
+    curFace->a_s = -std::max(f_s, 0.0) - A(data, Pe_s) * eta_S * dx / dy;
+
     curFace->a_p_v = 0.5 * (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->alpha)) * dx * dy / dt;
-    curFace->a_p_tilde = (std::abs(rho_E * u_E) + rho_E * u_E)/2 * dy + eta_E * dy / dx 
-                        + (std::abs(rho_W * u_W) - rho_W * u_W)/2 * dy + eta_W * dy / dx 
-                        + (std::abs(rho_N * v_N) + rho_N * v_N)/2 * dx + eta_N * dx / dy 
-                        + (std::abs(rho_S * v_S) - rho_S * v_S)/2 * dx + eta_S * dx / dy;
+
+    curFace->a_p_tilde = -(curFace->a_e + curFace->a_w + curFace->a_n + curFace->a_s);
+
     curFace->b = (curFace->neighCells[LEFT]->p[INITIAL] - curFace->neighCells[RIGHT]->p[INITIAL]) * dy;
-    if (data.mode == 0){
+
+    if (data.mode == 0) {
         curFace->a_p_tilde += curFace->a_p_v;
         curFace->b += curFace->a_p_v * curFace->u_prev;
     }
 
-    if (curFace->neighCells[LEFT]->faces[SOUTH]->bType_u == DIRICHLET){
-        curFace->a_p_tilde -= (std::abs(rho_S * v_S) - rho_S * v_S)/2 * dx + eta_S * dx / dy;
+    if (curFace->neighCells[LEFT]->faces[SOUTH]->bType_u == DIRICHLET) {
+        curFace->a_p_tilde += curFace->a_s;
         curFace->a_p_tilde += (3 * eta_S * dx) / dy;
         curFace->a_s = 0;
-        curFace->a_n -= (eta_S * dx) / (3*dy);
-        curFace->b += (8 * eta_S * dx * data.u_bottom) / (3*dy);
+        curFace->a_n -= (eta_S * dx) / (3 * dy);
+        curFace->b += (8 * eta_S * dx * data.u_bottom) / (3 * dy);
+        // curFace->a_e = 0;
+        // curFace->a_w = 0;
+        // curFace->a_s = 0;
+        // curFace->a_n = 0;
+        // curFace->a_p_tilde = 1;
+        // curFace->b = data.u_bottom;
     }
-    if (curFace->neighCells[RIGHT]->faces[NORTH]->bType_u == DIRICHLET){
-        curFace->a_p_tilde -= (std::abs(rho_N * v_N) + rho_N * v_N)/2 * dx + eta_N * dx / dy;
+
+    if (curFace->neighCells[RIGHT]->faces[NORTH]->bType_u == DIRICHLET) {
+        curFace->a_p_tilde += curFace->a_n;
         curFace->a_p_tilde += (3 * eta_N * dx) / dy;
         curFace->a_n = 0;
-        curFace->a_s -= (eta_N * dx) / (3*dy);
-        curFace->b += (8 * eta_N * dx * data.u_top) / (3*dy);
+        curFace->a_s -= (eta_N * dx) / (3 * dy);
+        curFace->b += (8 * eta_N * dx * data.u_top) / (3 * dy);
+    //     curFace->a_e = 0;
+    //     curFace->a_w = 0;
+    //     curFace->a_s = 0;
+    //     curFace->a_n = 0;
+    //     curFace->a_p_tilde = 1;
+    //     curFace->b = data.u_top;
     }
 }
 
@@ -162,36 +186,47 @@ void computeVelocityCoeff_y(Data2D& data, int faceId) {
     double dy = curFace->neighCells[UP]->faces[WEST]->dy;
     double dt = data.dt;
 
-    // Compute the coefficients
-    curFace->a_e = -(std::abs(rho_E * u_E) - rho_E * u_E)/2 * dy - eta_E * dy / dx;
-    curFace->a_w = -(std::abs(rho_W * u_W) + rho_W * u_W)/2 * dy - eta_W * dy / dx;
-    curFace->a_n = -(std::abs(rho_N * v_N) - rho_N * v_N)/2 * dx - eta_N * dx / dy;
-    curFace->a_s = -(std::abs(rho_S * v_S) + rho_S * v_S)/2 * dx - eta_S * dx / dy;
-    curFace->a_p_v = 0.5 * (fRho(data, curFace->neighCells[UP]->alpha) + fRho(data, curFace->neighCells[DOWN]->alpha)) * dx * dy / dt;
-    curFace->a_p_tilde = (std::abs(rho_E * u_E) + rho_E * u_E)/2 * dy + eta_E * dy / dx 
-                        + (std::abs(rho_W * u_W) - rho_W * u_W)/2 * dy + eta_W * dy / dx 
-                        + (std::abs(rho_N * v_N) + rho_N * v_N)/2 * dx + eta_N * dx / dy 
-                        + (std::abs(rho_S * v_S) - rho_S * v_S)/2 * dx + eta_S * dx / dy;
+    double Pe_e = (rho_E * u_E * dx) / eta_E;
+    double Pe_w = (rho_W * u_W * dx) / eta_W;
+    double Pe_n = (rho_N * v_N * dy) / eta_N;
+    double Pe_s = (rho_S * v_S * dy) / eta_S;
+
+    double f_e = rho_E * u_E * dy;
+    double f_w = rho_W * u_W * dy;
+    double f_n = rho_N * v_N * dx;
+    double f_s = rho_S * v_S * dx;
+
+    curFace->a_e = -std::max(-f_e, 0.0) - A(data, Pe_e) * eta_E * dy / dx;
+    curFace->a_w = -std::max(f_w, 0.0) - A(data, Pe_w) * eta_W * dy / dx;
+    curFace->a_n = -std::max(-f_n, 0.0) - A(data, Pe_n) * eta_N * dx / dy;
+    curFace->a_s = -std::max(f_s, 0.0) - A(data, Pe_s) * eta_S * dx / dy;
+
+    curFace->a_p_v = 0.5 * (fRho(data, curFace->neighCells[LEFT]->alpha) + fRho(data, curFace->neighCells[RIGHT]->alpha)) * dx * dy / dt;
+    curFace->a_p_tilde =  -(curFace->a_e + curFace->a_w + curFace->a_n + curFace->a_s);
+    
+    // Compute source term with pressure gradients
     curFace->b = (curFace->neighCells[DOWN]->p[INITIAL] - curFace->neighCells[UP]->p[INITIAL]) * dx;
-    //curFace->b -= 9.81 * (fRho(data, curFace->neighCells[UP]->alpha) * dx * curFace->neighCells[UP]->faces[WEST]->dy + fRho(data, curFace->neighCells[DOWN]->alpha) * dx * curFace->neighCells[DOWN]->faces[WEST]->dy) / 2;
-    if (data.mode == 0){
+    curFace->b -= 9.81 * (fRho(data, curFace->neighCells[UP]->alpha) * dx * curFace->neighCells[UP]->faces[WEST]->dy + fRho(data, curFace->neighCells[DOWN]->alpha) * dx * curFace->neighCells[DOWN]->faces[WEST]->dy) / 2;
+
+    if (data.mode == 0) {
         curFace->a_p_tilde += curFace->a_p_v;
         curFace->b += curFace->a_p_v * curFace->v_prev;
     }
 
-    if (curFace->neighCells[UP]->faces[EAST]->bType_u == DIRICHLET){
-        curFace->a_p_tilde -= (std::abs(rho_E * u_E) + rho_E * u_E)/2 * dy + eta_E * dy / dx;
+    // Handle Dirichlet boundary conditions
+    if (curFace->neighCells[UP]->faces[EAST]->bType_u == DIRICHLET) {
+        curFace->a_p_tilde += curFace->a_e;
         curFace->a_p_tilde += (3 * eta_E * dy) / dx;
         curFace->a_e = 0;
-        curFace->a_w -= (eta_E * dy) / (3*dx);
-        curFace->b += (8 * eta_E * dy * data.v_right) / (3*dx);
+        curFace->a_w -= (eta_E * dy) / (3 * dx);
+        curFace->b += (8 * eta_E * dy * data.v_right) / (3 * dx);
     }
-    if (curFace->neighCells[UP]->faces[WEST]->bType_u == DIRICHLET){
-        curFace->a_p_tilde -= (std::abs(rho_W * u_W) - rho_W * u_W)/2 * dy + eta_W * dy / dx;
+    if (curFace->neighCells[UP]->faces[WEST]->bType_u == DIRICHLET) {
+        curFace->a_p_tilde += curFace->a_w;
         curFace->a_p_tilde += (3 * eta_W * dy) / dx;
         curFace->a_w = 0;
-        curFace->a_e -= (eta_W * dy) / (3*dx);
-        curFace->b += (8 * eta_W * dy * data.v_left) / (3*dx);
+        curFace->a_e -= (eta_W * dy) / (3 * dx);
+        curFace->b += (8 * eta_W * dy * data.v_left) / (3 * dx);
     }
 }
 
@@ -208,7 +243,7 @@ void setMomentumEquationYMatrix(Data2D& data, SpMat& momMatrix, Vector& momVecto
     for (int i = 0; i < data.nhorizontalFaces; i++) {
         Face2D* curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
-            momMatrix.insert(i, i) = curFace->a_p_tilde*(1+data.yInertiaDamper);
+            momMatrix.insert(i, i) = curFace->a_p_tilde/data.yInertiaDamper;
             momVector(i) = curFace->b;
             if (i > 0) {
                 momMatrix.insert(i, i - 1) = curFace->a_w;
@@ -248,7 +283,7 @@ for (int k = data.nhorizontalFaces; k < data.nFaces; k++) {
         int i = k - data.nhorizontalFaces;
         Face2D* curFace = &data.faces[k];
         if (curFace->bType_u == INNERCELL) {
-            momMatrix.insert(i, i) = curFace->a_p_tilde*(1+data.xInertiaDamper);
+            momMatrix.insert(i, i) = curFace->a_p_tilde/data.xInertiaDamper;
             momVector(i) = curFace->b;
             if (i > 0) {
                 momMatrix.insert(i, i - 1) = curFace->a_w;
@@ -460,7 +495,7 @@ void predictXVelocityFieldBiCGStab(Data2D& data) {
     // Set up the momentum equation matrices
     setMomentumEquationXMatrix(data, momMatrix, momVector);
 
-
+    
     //calculate initial residual
     Vector residual = momVector - momMatrix * momGuess;
     //L2-norm of the residual
@@ -684,15 +719,15 @@ void predictVelocityFieldExplicit(Data2D& data) {
     Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == NEUMANN) {
             if (i < data.nhorizontalFaces) {
-                if (curFace->neighCells[DOWN] == nullptr || curFace->neighCells[DOWN]->bType_sc == SOLID) {
+                if (curFace->neighCells[DOWN] == nullptr || curFace->neighCells[DOWN]->bType_p == SOLID) {
                     curFace->v[INTERMEDIATE_1] = curFace->neighCells[UP]->faces[NORTH]->v[INTERMEDIATE_1];
-                } else if (curFace->neighCells[UP] == nullptr || curFace->neighCells[UP]->bType_sc == SOLID) {
+                } else if (curFace->neighCells[UP] == nullptr || curFace->neighCells[UP]->bType_p == SOLID) {
                     curFace->v[INTERMEDIATE_1] = curFace->neighCells[DOWN]->faces[SOUTH]->v[INTERMEDIATE_1];
                 }
             } else if (i >= data.nhorizontalFaces) {
-                if (curFace->neighCells[LEFT] == nullptr || curFace->neighCells[LEFT]->bType_sc == SOLID) {
+                if (curFace->neighCells[LEFT] == nullptr || curFace->neighCells[LEFT]->bType_p == SOLID) {
                     curFace->u[INTERMEDIATE_1] = curFace->neighCells[RIGHT]->faces[EAST]->u[INTERMEDIATE_1];
-                } else if (curFace->neighCells[RIGHT] == nullptr || curFace->neighCells[RIGHT]->bType_sc == SOLID) {
+                } else if (curFace->neighCells[RIGHT] == nullptr || curFace->neighCells[RIGHT]->bType_p == SOLID) {
                     curFace->u[INTERMEDIATE_1] = curFace->neighCells[LEFT]->faces[WEST]->u[INTERMEDIATE_1];
                 }
             }

@@ -55,6 +55,7 @@ void iterateSteady(Data2D& data, int iteration){
     }
 
     checkConvergence(data, iteration);
+    advectAlpha(data);
 }
 
 void iterateTransient(Data2D& data, int iteration){
@@ -89,7 +90,10 @@ double A(Data2D data, double Pe){
     if (data.pecFunc == 0) res = 1.0;                                                       // Upwind
     else if (data.pecFunc == 1) res = std::max(0.0, std::pow(1.0 - 0.1 * std::abs(Pe), 5)); // Potenzgesetz
     else if (data.pecFunc == 2) res = 1 - 0.5 * std::abs(Pe);                               // Central
-    else if (data.pecFunc == 3) res = std::abs(Pe)/(std::exp(std::abs(Pe)) - 1);            // Exponential
+    else if (data.pecFunc == 3){
+        if (std::abs(Pe) < 1e-6) res = 1.0;                                                  // Exponential
+        else res = std::abs(Pe)/(std::exp(std::abs(Pe)) - 1);
+    }
     else if (data.pecFunc == 4) res = std::max(0.0, 1.0 - 0.5 * std::abs(Pe));              // Hybrid
     return res;
 }
@@ -234,7 +238,7 @@ void resetData(Data2D& data) {
     for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
         if (curCell->bType_p == INNERCELL || curCell->bType_p == NEUMANN) {
-            pressureRest += std::abs(curCell->p[CORRECTED_2] - curCell->p[INITIAL]);
+            pressureRest += std::pow((curCell->p[CORRECTED_2] - curCell->p[INITIAL]), 2.0);
             curCell->p[INITIAL] = curCell->p[CORRECTED_2];
         } else if (curCell->bType_p == DIRICHLET || curCell->bType_p == SOLID) {
             continue;
@@ -244,8 +248,8 @@ void resetData(Data2D& data) {
     for (int i = 0; i < data.nFaces; i++) {
         Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
-            momentumXRest += std::abs(curFace->u[CORRECTED_2] - curFace->u[INITIAL]);
-            momentumYRest += std::abs(curFace->v[CORRECTED_2] - curFace->v[INITIAL]);
+            momentumXRest += std::pow((curFace->u[CORRECTED_2] - curFace->u[INITIAL]), 2.0);
+            momentumYRest += std::pow((curFace->v[CORRECTED_2] - curFace->v[INITIAL]), 2.0);
             curFace->u[INITIAL] = curFace->u[CORRECTED_2];
             curFace->v[INITIAL] = curFace->v[CORRECTED_2];
         } else if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID) {
@@ -255,11 +259,16 @@ void resetData(Data2D& data) {
             curFace->v[INITIAL] = curFace->v[CORRECTED_2];
         }
     }
-
-    std::cout << std::endl << "Pressure residual: " << pressureRest << std::endl;
-    std::cout << "Momentum X residual: " << momentumXRest << std::endl;
-    std::cout << "Momentum Y residual: " << momentumYRest << std::endl;
+    pressureRest = std::sqrt(pressureRest);
+    momentumXRest = std::sqrt(momentumXRest);
+    momentumYRest = std::sqrt(momentumYRest);
+    std::cout << std::endl << "Pressure iteration residual: " << pressureRest << std::endl;
+    std::cout << "Momentum X iteration residual: " << momentumXRest << std::endl;
+    std::cout << "Momentum Y iteration residual: " << momentumYRest << std::endl;
     std::cout << std::endl << "======================================" << std::endl;
+    data.pIterationRes.push_back(pressureRest);
+    data.uIterationRes.push_back(momentumXRest);
+    data.vIterationRes.push_back(momentumYRest);
 }
 
 double rhsConvergence(Data2D data){

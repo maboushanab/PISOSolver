@@ -41,45 +41,43 @@ void processFile(std::ifstream &file, std::unordered_map<std::string, double> &k
 //
 
 void cellsConstPressure(std::vector<std::string>& CellProp, int xDim, int yDim, double pressure, 
-                        double left_sc, double left_p, double right_sc, double right_p, double top_sc, 
-                        double top_p, double bottom_sc, double bottom_p) {
+                        double left_p, double right_p, double top_p, double bottom_p) {
     int cellIndex = 0;
     for (int i = 0; i < (xDim - 1) * (yDim - 1); i++) {
         if (cellIndex >= (xDim - 1) * (yDim - 1) - xDim + 1) {
-            CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_sc) + " " + std::to_string(top_p) + " " + std::to_string(pressure));
+            CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_p) + " " + std::to_string(pressure));
         } else if (cellIndex < xDim - 1) {
-            CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(pressure));
+            CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_p) + " " + std::to_string(pressure));
         } else if (cellIndex % (xDim - 1) == xDim - 2) {
-            CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_sc) + " " + std::to_string(right_p) + " " + std::to_string(pressure));
+            CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_p) + " " + std::to_string(pressure));
         } else if (cellIndex % (xDim - 1) == 0) {
-            CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(left_sc) + " " + std::to_string(left_p) + " " + std::to_string(pressure));
+            CellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(left_p) + " " + std::to_string(pressure));
         } else {
-            CellProp.push_back(std::to_string(cellIndex) + " 0 0 " + std::to_string(pressure));
+            CellProp.push_back(std::to_string(cellIndex) + " 0 " + std::to_string(pressure));
         }
         cellIndex++;
     }
 }
 
 void cellsPressureGradient_y(std::vector<std::string>& cellProp, int xDim, int yDim, double pressure_up, double pressure_down, 
-                            double left_sc, double left_p, double right_sc, double right_p, double top_sc, double top_p,
-                            double bottom_sc, double bottom_p) {
+                            double left_p, double right_p, double top_p, double bottom_p) {
     int cellIndex = 0;
     double p_grad_y = (pressure_down - pressure_up) / (yDim - 2);
     for (int i = 0; i < yDim - 1; i++) {
         double p_y = pressure_up + i * p_grad_y;
         for(int j = 0; j < xDim - 1; j++){
             if (cellIndex >= (xDim - 1) * (yDim - 1) - xDim + 1) {
-                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_sc) + " " + std::to_string(top_p) + " " + std::to_string(p_y));
+                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_p) + " " + std::to_string(p_y));
             } else if (cellIndex < xDim - 1) {
-                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(p_y));
+                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_p) + " " + std::to_string(p_y));
             } else if (cellIndex % (xDim - 1) == xDim - 2) {
-                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_sc) + " " + std::to_string(right_p) + " " + std::to_string(p_y));
+                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_p) + " " + std::to_string(p_y));
 
             } else if (cellIndex % (xDim - 1) == 0) {
-                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(left_sc) + " " + std::to_string(left_p) + " " + std::to_string(p_y));
+                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(left_p) + " " + std::to_string(p_y));
 
             } else {
-                cellProp.push_back(std::to_string(cellIndex) + " 0 0 " + std::to_string(p_y));
+                cellProp.push_back(std::to_string(cellIndex) + " 0 " + std::to_string(p_y));
             }
             cellIndex++;
         }
@@ -88,23 +86,22 @@ void cellsPressureGradient_y(std::vector<std::string>& cellProp, int xDim, int y
 }
 
 void cellsPressureGradient_x(std::vector<std::string>& cellProp, int xDim, int yDim, double pressure_left, double pressure_right,
-                            double left_sc, double left_p, double right_sc, double right_p, double top_sc, double top_p,
-                            double bottom_sc, double bottom_p) {
+                            double left_p, double right_p, double top_p, double bottom_p) {
     int cellIndex = 0;
     double p_grad_x = (pressure_right - pressure_left) / (xDim - 2);
     for (int i = 0; i < yDim - 1; i++) {
         double p_x = pressure_left;
         for(int j = 0; j < xDim - 1; j++){
             if (cellIndex >= (xDim - 1) * (yDim - 1) - xDim + 1) {
-                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_sc) + " " + std::to_string(top_p) + " " + std::to_string(p_x));
+                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(top_p) + " " + std::to_string(p_x));
             } else if (cellIndex < (xDim - 1)) {
-                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_sc) + " " + std::to_string(bottom_p) + " " + std::to_string(p_x));
+                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(bottom_p) + " " + std::to_string(p_x));
             } else if (cellIndex % (xDim - 1) == xDim - 2) {
-                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_sc) + " " + std::to_string(right_p) + " " + std::to_string(p_x));
+                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(right_p) + " " + std::to_string(p_x));
             } else if (cellIndex % (xDim - 1) == 0) {
-                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(left_sc) + " " + std::to_string(left_p) + " " + std::to_string(p_x));
+                cellProp.push_back(std::to_string(cellIndex) + " " + std::to_string(left_p) + " " + std::to_string(p_x));
             } else {
-                cellProp.push_back(std::to_string(cellIndex) + " 0 0 " + std::to_string(p_x));
+                cellProp.push_back(std::to_string(cellIndex) + " 0 " + std::to_string(p_x));
             }
             cellIndex++;
             p_x += p_grad_x;
@@ -113,38 +110,6 @@ void cellsPressureGradient_x(std::vector<std::string>& cellProp, int xDim, int y
 
 }
 
-void cellsConstanScalar(std::vector<std::string>& cellProp, int xDim, int yDim, double scalar) {
-    for (int i = 0; i < cellProp.size(); i++) {
-        cellProp[i] += " " + std::to_string(scalar);
-    }
-}
-
-void cellsScalarGradient_y(std::vector<std::string>& cellProp, int xDim, int yDim, double scalar_up, double scalar_down) {
-    int cellIndex = 0;
-    double s_grad_y = (scalar_down - scalar_up) / (yDim - 2);
-    for (int i = 0; i < yDim - 1; i++) {
-        double s_y = scalar_up + i * s_grad_y;
-        for(int j = 0; j < xDim - 1; j++){
-            cellProp[cellIndex] += " " + std::to_string(s_y);
-            cellIndex++;
-        }
-    }
-
-}
-
-void cellsScalarGradient_x(std::vector<std::string>& cellProp, int xDim, int yDim, double scalar_left, double scalar_right) {
-    int cellIndex = 0;
-    double s_grad_x = (scalar_right - scalar_left) / (xDim - 2);
-    for (int i = 0; i < yDim - 1; i++) {
-        double s_x = scalar_left;
-        for(int j = 0; j < xDim - 1; j++){
-            cellProp[cellIndex] += " " + std::to_string(s_x);
-            cellIndex++;
-            s_x += s_grad_x;
-        }
-    }
-
-}
 
 void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
     if (keywordValues.at("dx") == 0 || keywordValues.at("dy") == 0) {
@@ -159,32 +124,16 @@ void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
         std::cerr << "Invalid values for x or y." << std::endl;
         return;
     }
-    if (keywordValues.at("left_sc") <= 0 || keywordValues.at("left_sc") > 3) {
-        std::cerr << "Invalid value for left_sc." << std::endl;
-        return;
-    }
         if (keywordValues.at("left_p") <= 0 || keywordValues.at("left_p") > 3) {
         std::cerr << "Invalid value for left_p." << std::endl;
-        return;
-    }
-    if (keywordValues.at("right_sc") <= 0 || keywordValues.at("right_sc") > 3) {
-        std::cerr << "Invalid value for right_sc." << std::endl;
         return;
     }
     if (keywordValues.at("right_p") <= 0 || keywordValues.at("right_p") > 3) {
         std::cerr << "Invalid value for right_p." << std::endl;
         return;
     }
-    if (keywordValues.at("top_sc") <= 0 || keywordValues.at("top_sc") > 3) {
-        std::cerr << "Invalid value for top_sc." << std::endl;
-        return;
-    }
     if (keywordValues.at("top_p") <= 0 || keywordValues.at("top_p") > 3) {
         std::cerr << "Invalid value for top_p." << std::endl;
-        return;
-    }
-    if (keywordValues.at("bottom_sc") <= 0 || keywordValues.at("bottom_sc") > 3) {
-        std::cerr << "Invalid value for bottom_sc." << std::endl;
         return;
     }
     if (keywordValues.at("bottom_p") <= 0 || keywordValues.at("bottom_p") > 3) {
@@ -212,26 +161,16 @@ void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
         }
         meshFile << std::endl;
         meshFile << "# cells" << std::endl;
-        meshFile << "# boundary_sc boundary_p p sc" << std::endl;
+        meshFile << "# boundary_p p" << std::endl;
         std::vector<std::string> cellProp;
         if (keywordValues.at("pressure_field_type") == 0) {
-            cellsConstPressure(cellProp, xDim, yDim, keywordValues.at("pressure"), keywordValues.at("left_sc"), keywordValues.at("left_p"), keywordValues.at("right_sc"), keywordValues.at("right_p"), keywordValues.at("top_sc"), keywordValues.at("top_p"), keywordValues.at("bottom_sc"), keywordValues.at("bottom_p"));
+            cellsConstPressure(cellProp, xDim, yDim, keywordValues.at("pressure"), keywordValues.at("left_p"), keywordValues.at("right_p"), keywordValues.at("top_p"), keywordValues.at("bottom_p"));
         } else if (keywordValues.at("pressure_field_type") == 1){
-            cellsPressureGradient_x(cellProp, xDim, yDim, keywordValues.at("pressure_left"), keywordValues.at("pressure_right"), keywordValues.at("left_sc"), keywordValues.at("left_p"), keywordValues.at("right_sc"), keywordValues.at("right_p"), keywordValues.at("top_sc"), keywordValues.at("top_p"), keywordValues.at("bottom_sc"), keywordValues.at("bottom_p"));
+            cellsPressureGradient_x(cellProp, xDim, yDim, keywordValues.at("pressure_left"), keywordValues.at("pressure_right"), keywordValues.at("left_p"), keywordValues.at("right_p"), keywordValues.at("top_p"), keywordValues.at("bottom_p"));
         } else if (keywordValues.at("pressure_field_type") == 2){
-            cellsPressureGradient_y(cellProp, xDim, yDim, keywordValues.at("pressure_up"), keywordValues.at("pressure_down"), keywordValues.at("left_sc"), keywordValues.at("left_p"), keywordValues.at("right_sc"), keywordValues.at("right_p"), keywordValues.at("top_sc"), keywordValues.at("top_p"), keywordValues.at("bottom_sc"), keywordValues.at("bottom_p"));
+            cellsPressureGradient_y(cellProp, xDim, yDim, keywordValues.at("pressure_up"), keywordValues.at("pressure_down"), keywordValues.at("left_p"), keywordValues.at("right_p"), keywordValues.at("top_p"), keywordValues.at("bottom_p"));
         } else { 
             std::cerr << "Invalid value for pressure_field_type." << std::endl;
-            return;
-        }
-        if (keywordValues.at("scalar_field_type") == 0) {
-            cellsConstanScalar(cellProp, xDim, yDim, keywordValues.at("scalar"));
-        } else if (keywordValues.at("scalar_field_type") == 1){
-            cellsScalarGradient_x(cellProp, xDim, yDim, keywordValues.at("scalar_left"), keywordValues.at("scalar_right"));
-        } else if (keywordValues.at("scalar_field_type") == 2){
-            cellsScalarGradient_y(cellProp, xDim, yDim, keywordValues.at("scalar_up"), keywordValues.at("scalar_down"));
-        } else { 
-            std::cerr << "Invalid value for scalar_field_type." << std::endl;
             return;
         }
         for (int i = 0; i < cellProp.size(); i++) {
@@ -248,16 +187,16 @@ void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
             faceProp.push_back(std::to_string(i) + " 0 0 0");
         }
         for (int i = 0; i >= 0 && i < (xDim - 1); i++){
-            faceProp[i] = std::to_string(i) + " " + std::to_string(keywordValues.at("bottom_vel")) + " " + std::to_string(keywordValues.at("bottom_u")) + " " + std::to_string(keywordValues.at("bottom_v"));
+            faceProp[i] = std::to_string(i) + " " + std::to_string(keywordValues.at("bottom_vel")) + " 0 " + std::to_string(keywordValues.at("bottom_v"));
         }
         for (int i = (xDim - 1) * yDim - xDim + 1; i < (xDim - 1) * yDim; i++){
-            faceProp[i] = std::to_string(i) + " " + std::to_string(keywordValues.at("top_vel")) + " " + std::to_string(keywordValues.at("top_u")) + " " + std::to_string(keywordValues.at("top_v"));
+            faceProp[i] = std::to_string(i) + " " + std::to_string(keywordValues.at("top_vel")) + " 0 " + std::to_string(keywordValues.at("top_v"));
         }
         int nHorizonalFaces = (xDim - 1) * yDim;
         int nVerticalFaces = (yDim - 1) * xDim;
         for (int i = 0; i <= (yDim - 2); i++){
-            faceProp[nHorizonalFaces + i*xDim] = std::to_string(nHorizonalFaces + i*xDim) + " " + std::to_string(keywordValues.at("left_vel")) + " " + std::to_string(keywordValues.at("left_u")) + " " + std::to_string(keywordValues.at("left_v"));
-            faceProp[nHorizonalFaces + xDim - 1 + i*xDim] = std::to_string(nHorizonalFaces + xDim - 1 + i*xDim) + " " + std::to_string(keywordValues.at("right_vel")) + " " + std::to_string(keywordValues.at("right_u")) + " " + std::to_string(keywordValues.at("right_v")); 
+            faceProp[nHorizonalFaces + i*xDim] = std::to_string(nHorizonalFaces + i*xDim) + " " + std::to_string(keywordValues.at("left_vel")) + " " + std::to_string(keywordValues.at("left_u")) + " 0";
+            faceProp[nHorizonalFaces + xDim - 1 + i*xDim] = std::to_string(nHorizonalFaces + xDim - 1 + i*xDim) + " " + std::to_string(keywordValues.at("right_vel")) + " " + std::to_string(keywordValues.at("right_u")) + " 0"; 
         }
         for (int i = 0; i < faceProp.size(); i++) {
             meshFile << faceProp[i] << std::endl;
@@ -281,24 +220,16 @@ int main(int argc, char **argv) {
         {"y", 0},
         {"dx", 0},
         {"dy", 0},
-        {"left_sc", 0},
         {"left_p", 0},
-        {"right_sc", 0},
         {"right_p", 0},
-        {"top_sc", 0},
         {"top_p", 0},
-        {"bottom_sc", 0},
         {"bottom_p", 0},
         {"left_vel", 0},
         {"right_vel", 0},
         {"top_vel", 0},
         {"bottom_vel", 0},
-        {"left_u", 0},
         {"right_u", 0},
-        {"top_u", 0},
-        {"bottom_u", 0},
-        {"left_v", 0},
-        {"right_v", 0},
+        {"left_u", 0},
         {"top_v", 0},
         {"bottom_v", 0},
         {"pressure_field_type", 0},
@@ -307,12 +238,6 @@ int main(int argc, char **argv) {
         {"pressure_right", 0},
         {"pressure_up", 0},
         {"pressure_down", 0},
-        {"scalar_field_type", 0},
-        {"scalar", 0},
-        {"scalar_left", 0},
-        {"scalar_right", 0},
-        {"scalar_up", 0},
-        {"scalar_down", 0}
     };
 
     processFile(meshSettingsFile, keywordValues);
