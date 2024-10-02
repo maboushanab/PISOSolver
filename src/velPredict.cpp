@@ -206,8 +206,10 @@ void computeVelocityCoeff_y(Data2D& data, int faceId) {
     
     // Compute source term with pressure gradients
     curFace->b = (curFace->neighCells[DOWN]->p[INITIAL] - curFace->neighCells[UP]->p[INITIAL]) * dx;
-    curFace->b -= 9.81 * (fRho(data, curFace->neighCells[UP]->alpha) * dx * curFace->neighCells[UP]->faces[WEST]->dy + fRho(data, curFace->neighCells[DOWN]->alpha) * dx * curFace->neighCells[DOWN]->faces[WEST]->dy) / 2;
-
+    if (data.isThereGravity == 0){
+        curFace->b -= 9.81 * (fRho(data, curFace->neighCells[UP]->alpha) * dx * curFace->neighCells[UP]->faces[WEST]->dy + fRho(data, curFace->neighCells[DOWN]->alpha) * dx * curFace->neighCells[DOWN]->faces[WEST]->dy) / 2;
+    }
+    
     if (data.mode == 0) {
         curFace->a_p_tilde += curFace->a_p_v;
         curFace->b += curFace->a_p_v * curFace->v_prev;
@@ -510,9 +512,9 @@ void predictXVelocityFieldBiCGStab(Data2D& data) {
 
     try {
         // Solve for uMatrix
-        Eigen::BiCGSTAB<SpMat, Eigen::DiagonalPreconditioner<double>> solver;
+        Eigen::BiCGSTAB<SpMat, Eigen::IncompleteLUT<double>> solver;
         //GMRES
-        // Eigen::GMRES<SpMat, Eigen::DiagonalPreconditioner<double>> solver;
+        // Eigen::GMRES<SpMat, Eigen::IncompleteLUT<double>> solver;
         solver.setMaxIterations(10000); // Increase iteration count if needed
         solver.setTolerance(1e-6);     // Adjust the tolerance to balance accuracy and speed
         solver.compute(momMatrix);
@@ -583,7 +585,7 @@ void predictYVelocityFieldBiCGStab(Data2D& data) {
 
     try {
         // Solve for uMatrix
-        Eigen::BiCGSTAB<SpMat, Eigen::DiagonalPreconditioner<double>> solver;
+        Eigen::BiCGSTAB<SpMat, Eigen::IncompleteLUT<double>> solver;
         //GMRES
         // Eigen::GMRES<SpMat, Eigen::DiagonalPreconditioner<double>> solver;
         solver.setMaxIterations(10000); // Increase iteration count if needed

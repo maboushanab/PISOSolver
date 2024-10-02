@@ -20,7 +20,7 @@ std::string fSolve(Data2D& data) {
 
         // PISO algorithm
         if (data.mode == 0){            // Transient
-            iterateTransient(data, 1);
+            iterateTransient(data, 1, true);
         } else {                        // Steady State
             iterateSteady(data, 1);
         }
@@ -55,23 +55,26 @@ void iterateSteady(Data2D& data, int iteration){
     }
 
     checkConvergence(data, iteration);
-    advectAlpha(data);
+    // advectAlpha(data);
 }
 
-void iterateTransient(Data2D& data, int iteration){
-    assignPrevData(data);
+void iterateTransient(Data2D& data, int iteration, bool iterateTime){
+    if (iterateTime == true){
+        assignPrevData(data);
+    }
     predictXVelocityField(data);
     predictYVelocityField(data);
 
     correctPressureEquation(data, INTERMEDIATE_1);
     corrector1(data);
 
-    correctPressureEquation(data, INTERMEDIATE_2);
+    // correctPressureEquation(data, INTERMEDIATE_2);
     corrector2(data);
 
     checkConvergence(data, iteration);
-
-    advectAlpha(data);
+    if (data.isThereAlpha = true){
+        advectAlpha(data);
+    }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,38 +167,37 @@ double continutyResidual(Data2D& data, int cellId, int step){
 }
 
 void checkConvergence(Data2D& data, int iteration){
-    if (std::abs(std::abs(data.continuityResidual) > 1e-6 || std::abs(data.momentumXResidual) > 1e-4 || std::abs(data.momentumYResidual) > 1e-4) &&  iteration < data.maxIteration){
+    double pressureRest = 0;
+    double momentumXRest = 0;
+    double momentumYRest = 0;
+    for (int i = 0; i < data.nCells; i++) {
+        Cell2D *curCell = &data.cells[i];
+        pressureRest += std::pow((curCell->p[CORRECTED_2] - curCell->p[INITIAL]), 2.0);
+    }
+    for (int i = 0; i < data.nFaces; i++) {
+        Face2D *curFace = &data.faces[i];
+        momentumXRest += std::pow((curFace->u[CORRECTED_2] - curFace->u[INITIAL]), 2.0);
+        momentumYRest += std::pow((curFace->v[CORRECTED_2] - curFace->v[INITIAL]), 2.0);
+    }
+    pressureRest = std::sqrt(pressureRest);
+    momentumXRest = std::sqrt(momentumXRest);
+    momentumYRest = std::sqrt(momentumYRest);
+    std::cout << std::endl << "Pressure iteration residual: " << pressureRest << std::endl;
+    std::cout << "Momentum X iteration residual: " << momentumXRest << std::endl;
+    std::cout << "Momentum Y iteration residual: " << momentumYRest << std::endl;
+    std::cout << std::endl << "======================================" << std::endl;
+    data.pIterationRes.push_back(pressureRest);
+    data.uIterationRes.push_back(momentumXRest);
+    data.vIterationRes.push_back(momentumYRest);
+        
+    if ((std::abs(data.continuityResidual) > 1e-6 || std::abs(data.momentumXResidual) > 1e-4 || std::abs(data.momentumYResidual) > 1e-4 || pressureRest > 1e-7 || momentumXRest > 1e-7 || momentumYRest > 1e-7) &&  iteration < data.maxIteration){
         data.continuityResiduals.push_back(std::abs(data.continuityResidual));
         data.momentumXResiduals.push_back(std::abs(data.momentumXResidual));
         data.momentumYResiduals.push_back(std::abs(data.momentumYResidual));
-        // if (iteration > 1){
-        //     double prevContinuityResidual = data.continuityResiduals[iteration - 1];
-        //     double prevMomentumXResidual = data.momentumXResiduals[iteration - 1];
-        //     double prevMomentumYResidual = data.momentumYResiduals[iteration - 1];
-        //     if (data.continuityResidual - prevContinuityResidual > 0){
-        //         data.alpha_p_relax = std::max(data.alpha_p_relax - 0.01, 0.1);
-        //     } else {
-        //         data.alpha_p_relax = std::min(data.alpha_p_relax + 0.01, 1.0);
-        //     }
-        //     if (data.momentumXResidual - prevMomentumXResidual > 0){
-        //         data.alpha_u_relax = std::max(data.alpha_u_relax - 0.01, 0.1);
-        //         data.xInertiaDamper = std::max(data.xInertiaDamper - 0.01, 0.1);
-        //     } else {
-        //         data.alpha_u_relax = std::min(data.alpha_u_relax + 0.01, 1.0);
-        //         data.xInertiaDamper = std::min(data.xInertiaDamper + 0.01, 1.0);
-        //     }
-        //     if (data.momentumYResidual - prevMomentumYResidual > 0){
-        //         data.alpha_v_relax = std::max(data.alpha_v_relax - 0.01, 0.1);
-        //         data.yInertiaDamper = std::max(data.yInertiaDamper - 0.01, 0.1);
-        //     } else {
-        //         data.alpha_v_relax = std::min(data.alpha_v_relax + 0.01, 1.0);
-        //         data.yInertiaDamper = std::min(data.yInertiaDamper + 0.01, 1.0);
-        //     }
-        // }
         iteration++;
         resetData(data);
         if (data.mode == 0){
-            iterateTransient(data, iteration);
+            iterateTransient(data, iteration, false);
         } else {
             iterateSteady(data, iteration);
         }
@@ -232,13 +234,9 @@ void assignPrevData(Data2D& data){
 }
 
 void resetData(Data2D& data) {
-    double pressureRest = 0;
-    double momentumXRest = 0;
-    double momentumYRest = 0;
     for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
         if (curCell->bType_p == INNERCELL || curCell->bType_p == NEUMANN) {
-            pressureRest += std::pow((curCell->p[CORRECTED_2] - curCell->p[INITIAL]), 2.0);
             curCell->p[INITIAL] = curCell->p[CORRECTED_2];
         } else if (curCell->bType_p == DIRICHLET || curCell->bType_p == SOLID) {
             continue;
@@ -248,8 +246,6 @@ void resetData(Data2D& data) {
     for (int i = 0; i < data.nFaces; i++) {
         Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL) {
-            momentumXRest += std::pow((curFace->u[CORRECTED_2] - curFace->u[INITIAL]), 2.0);
-            momentumYRest += std::pow((curFace->v[CORRECTED_2] - curFace->v[INITIAL]), 2.0);
             curFace->u[INITIAL] = curFace->u[CORRECTED_2];
             curFace->v[INITIAL] = curFace->v[CORRECTED_2];
         } else if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID) {
@@ -259,64 +255,6 @@ void resetData(Data2D& data) {
             curFace->v[INITIAL] = curFace->v[CORRECTED_2];
         }
     }
-    pressureRest = std::sqrt(pressureRest);
-    momentumXRest = std::sqrt(momentumXRest);
-    momentumYRest = std::sqrt(momentumYRest);
-    std::cout << std::endl << "Pressure iteration residual: " << pressureRest << std::endl;
-    std::cout << "Momentum X iteration residual: " << momentumXRest << std::endl;
-    std::cout << "Momentum Y iteration residual: " << momentumYRest << std::endl;
-    std::cout << std::endl << "======================================" << std::endl;
-    data.pIterationRes.push_back(pressureRest);
-    data.uIterationRes.push_back(momentumXRest);
-    data.vIterationRes.push_back(momentumYRest);
-}
-
-double rhsConvergence(Data2D data){
-    double rhs = 0;
-    for(int i = 0; i < data.nCells; i++){
-        Cell2D *curCell = &data.cells[i];
-        double dx = curCell->faces[SOUTH]->dx;
-        double dy = curCell->faces[WEST]->dy;
-        if (curCell->bType_p == INNERCELL) {
-            double rho_e;
-            double rho_w;
-            double rho_n;
-            double rho_s;
-            // Density terms
-            if (curCell->neighCells[EAST] == nullptr) {
-                rho_e = fRho(data, curCell->alpha);
-            } else {
-                rho_e = 0.5 * (fRho(data, curCell->neighCells[EAST]->alpha) + fRho(data, curCell->alpha));
-            }
-            if (curCell->neighCells[WEST] == nullptr) {
-                rho_w = fRho(data, curCell->alpha);
-            } else {
-                rho_w = 0.5 * (fRho(data, curCell->neighCells[WEST]->alpha) + fRho(data, curCell->alpha));
-            }
-            if (curCell->neighCells[NORTH] == nullptr) {
-                rho_n = fRho(data, curCell->alpha);
-            } else {
-                rho_n = 0.5 * (fRho(data, curCell->neighCells[NORTH]->alpha) + fRho(data, curCell->alpha));
-            }
-            if (curCell->neighCells[SOUTH] == nullptr) {
-                rho_s = fRho(data, curCell->alpha);
-            } else {
-                rho_s = 0.5 * (fRho(data, curCell->neighCells[SOUTH]->alpha) + fRho(data, curCell->alpha));
-            }
-
-            double b_e = rho_e * dy * curCell->faces[EAST]->neighbourSum / curCell->faces[EAST]->a_p_tilde;
-            double b_w = rho_w * dy * curCell->faces[WEST]->neighbourSum / curCell->faces[WEST]->a_p_tilde;
-            double b_n = rho_n * dx * curCell->faces[NORTH]->neighbourSum / curCell->faces[NORTH]->a_p_tilde;
-            double b_s = rho_s * dx * curCell->faces[SOUTH]->neighbourSum / curCell->faces[SOUTH]->a_p_tilde;
-            
-            curCell->b = b_e - b_w + b_n - b_s;
-        } else if (curCell->bType_p == DIRICHLET || curCell->bType_p == SOLID) {
-            double b = curCell->p[CORRECTED_2];
-            rhs += b;
-        }
-    }
-    std::cout << "RHS: " << rhs << std::endl;
-    return rhs;
 }
 
 void assignVelocities(Data2D& data, int step){
@@ -343,14 +281,9 @@ void calcCFL(Data2D& data){
             } else {
                 dy = curFace->neighCells[DOWN]->faces[WEST]->dy;
             }
-            // std::cout << "v: " << v << std::endl;
-            // std::cout << "dy: " << dy << std::endl;
-            // std::cout << "dt: " << data.dt << std::endl;
-            double cfl = std::abs(v) * data.dt / dy;
-            if (cfl > maxCFL){
-                maxCFL = cfl;
-                maxDx = dy;
+            if (v > maxU){
                 maxU = v;
+                maxDx = dy;
             } 
         } else {
             double u = curFace->u[CORRECTED_2];
@@ -360,19 +293,15 @@ void calcCFL(Data2D& data){
             } else {
                 dx = curFace->neighCells[RIGHT]->faces[NORTH]->dx;
             }
-            // std::cout << "u: " << u << std::endl;
-            // std::cout << "dx: " << dx << std::endl;
-            // std::cout << "dt: " << data.dt << std::endl;
-            double cfl = std::abs(u) * data.dt / dx;
-            if (cfl > maxCFL){
-                maxCFL = cfl;
+            if (u > maxU){
                 maxDx = dx;
                 maxU = u;
             }
         }
     }
+    maxCFL = std::abs(maxU) * data.dt / maxDx;
     std::cout << "CFL: " << maxCFL << std::endl;
-    if (maxCFL > 0.5){
-        data.dt = 0.5 * maxDx / std::abs(maxU);
+    if (maxCFL > 0.2){
+        data.dt = 0.2 * maxDx / std::abs(maxU);
     }
 }

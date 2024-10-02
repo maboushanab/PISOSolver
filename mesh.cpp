@@ -111,7 +111,7 @@ void cellsPressureGradient_x(std::vector<std::string>& cellProp, int xDim, int y
 }
 
 
-void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
+void createMesh(const std::unordered_map<std::string, double> &keywordValues, std::string destinationFile) {
     if (keywordValues.at("dx") == 0 || keywordValues.at("dy") == 0) {
         std::cerr << "Invalid values for dx or dy." << std::endl;
         return;
@@ -144,7 +144,7 @@ void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
     int xDim = 1 + keywordValues.at("x")/ keywordValues.at("dx");
     int yDim = 1 + keywordValues.at("y")/ keywordValues.at("dy");
 
-    std::ofstream meshFile("in.mesh");
+    std::ofstream meshFile(destinationFile);
 
     if (meshFile.is_open()) {
         meshFile << "# point dimensions" << std::endl;
@@ -208,6 +208,7 @@ void createMesh(const std::unordered_map<std::string, double> &keywordValues) {
 
 int main(int argc, char **argv) {
     std::ifstream meshSettingsFile(argv[1]);
+    std::string destinationFile = argv[2];
 
     if (!meshSettingsFile) {
         std::cerr << "Unable to open file." << std::endl;
@@ -241,7 +242,7 @@ int main(int argc, char **argv) {
     };
 
     processFile(meshSettingsFile, keywordValues);
-    createMesh(keywordValues);
+    createMesh(keywordValues, destinationFile);
     meshSettingsFile.close();
 
     return 0;

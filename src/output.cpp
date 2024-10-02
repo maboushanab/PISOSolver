@@ -99,6 +99,11 @@ bool fOutputVTKframe(Data2D& data, std::string finalDirectoryName, int step) {
     for (int i = 0; i < data.nCells; ++i) {
         outputFile << data.cells[i].interfaceLine.n << " " << data.cells[i].interfaceLine.m << " " << 0 << std::endl;
     }
+    //Write the cell data (n,m)
+        outputFile << "VECTORS (x,y) float" << std::endl;
+    for (int i = 0; i < data.nCells; ++i) {
+        outputFile << data.cells[i].x << " " << data.cells[i].y << " " << 0 << std::endl;
+    }
     // Close the output file
     outputFile.close();
 

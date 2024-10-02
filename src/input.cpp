@@ -156,6 +156,7 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
     data.u_bottom = numbers_setup[16];
     data.v_left = numbers_setup[17];
     data.v_right = numbers_setup[18];
+    data.isThereGravity = numbers_setup[19];
 
 
     return 0;

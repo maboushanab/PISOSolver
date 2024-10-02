@@ -23,7 +23,12 @@ int main(int argc, char** argv) {
     const char* setupFilePath = argv[2];
     std::cout << "Setup file path: " << setupFilePath << std::endl;
     const char* alphaFilePath = argv[3];
-    std::cout << "Alpha file path: " << alphaFilePath << std::endl;
+    if (argc < 4) {
+        std::cout << "No alpha file path provided" << std::endl;
+    } else {
+        const char* alphaFilePath = argv[3];
+        std::cout << "Alpha file path: " << alphaFilePath << std::endl;
+    }
 
     bool input = fInput(inputFilePath, setupFilePath, data);
     bool setup = fSetup(alphaFilePath, data);

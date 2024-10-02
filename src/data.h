@@ -176,6 +176,8 @@ struct Data2D {
     int presSolver;                                             //pressure solver type
     bool fixedPressure;                                         //fixed pressure
     int mode;                                                   //mode
+    bool isThereAlpha;
+    bool isThereGravity;
     
 
     double alpha_p_relax;                                       //pressure relaxation factor

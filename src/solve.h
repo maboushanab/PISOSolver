@@ -12,7 +12,7 @@ typedef Eigen::VectorXd Vector;
 
 std::string fSolve(Data2D& data);
 void iterateSteady(Data2D& data, int iteration);
-void iterateTransient(Data2D& data, int iteration);
+void iterateTransient(Data2D& data, int iteration, bool iterateTime);
 
 // Suplementary functions
 double A(Data2D data, double Pe);
@@ -24,7 +24,6 @@ void calcCFL(Data2D& data);
 // Convergence
 double continutyResidual(Data2D& data, int cellId, int step);
 void checkConvergence(Data2D& data, int iteration);
-double rhsConvergence(Data2D data);
 // Reset
 void resetData(Data2D& data);
 void assignPrevData(Data2D& data);

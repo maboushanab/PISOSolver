@@ -242,7 +242,7 @@ void computePressureCoeff2(Data2D& data, int cellId){
         b_s = rho_s * dx * curCell->faces[SOUTH]->neighbourSum / curCell->faces[SOUTH]->a_p_tilde;
     }
     
-    curCell->b = -(b_e - b_w + b_n - b_s);
+    curCell->b = (b_e - b_w + b_n - b_s);
 
     // curCell->b = - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[EAST]->alpha)) * 0.5 * curCell->faces[EAST]->u[CORRECTED_1] * dy) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[WEST]->alpha)) * 0.5 *curCell->faces[WEST]->u[CORRECTED_1] * dy) 
     // - ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[NORTH]->alpha))* 0.5 *curCell->faces[NORTH]->v[CORRECTED_1] * dx) + ((fRho(data, curCell->alpha) + fRho(data, curCell->neighCells[SOUTH]->alpha))* 0.5 *curCell->faces[SOUTH]->v[CORRECTED_1] * dx);
@@ -399,18 +399,9 @@ void corrector1(Data2D& data) {
     // Update Pressure bzw. cells
     for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
-        if (curCell->bType_p == INNERCELL || curCell->bType_p == NEUMANN) {
-            curCell->p[CORRECTED_1] = curCell->p[INITIAL]  + data.alpha_p_relax * (curCell->p[INTERMEDIATE_1] - curCell->p[INITIAL]);
-            // curCell->p[CORRECTED_1] = data.alpha_p_relax * curCell->p[INTERMEDIATE_1] + curCell->p[INITIAL];
-        }
-    }
-    // Update Boundary Conditions
-    std::stack<Cell2D*> cornerCells; //saves the corner cells to update them after the other cells for average pressure
-    for (int i = 0; i < data.nCells; i++){
-        Cell2D *curCell = &data.cells[i];
-        if (curCell->bType_p == DIRICHLET || curCell->bType_p == SOLID) {
-            curCell->p[CORRECTED_1] = curCell->p[INITIAL];
-        } 
+        curCell->p[CORRECTED_1] = curCell->p[INITIAL]  + data.alpha_p_relax * (curCell->p[INTERMEDIATE_1] - curCell->p[INITIAL]);
+        // curCell->p[CORRECTED_1] = data.alpha_p_relax * curCell->p[INTERMEDIATE_1] + curCell->p[INITIAL];
+        // curCell->p[CORRECTED_1] = curCell->p[INTERMEDIATE_1] + curCell->p[CORRECTED_1];
     }
     // data.cells[0].p[CORRECTED_1] = 0.0;
 
@@ -472,11 +463,11 @@ void corrector1(Data2D& data) {
 }
 
 void corrector2(Data2D& data){
-    // data.alpha_p_relax = 0.2;
     // for (int i = 0; i < data.nCells; i++) {
     //     Cell2D *curCell = &data.cells[i];
     //     if (curCell->bType_p == INNERCELL || curCell->bType_p == NEUMANN) {
-    //         curCell->p[CORRECTED_2] = curCell->p[CORRECTED_1] + curCell->p[INTERMEDIATE_2] * data.alpha_p_relax;
+    //         curCell->p[CORRECTED_2] = curCell->p[CORRECTED_1]  + data.alpha_p_relax * (curCell->p[INTERMEDIATE_2] - curCell->p[CORRECTED_1]);
+    //         // curCell->p[CORRECTED_2] = curCell->p[INTERMEDIATE_2] + curCell->p[CORRECTED_1];
     //     }
     // }
     // // Update Boundary Conditions 
@@ -490,13 +481,16 @@ void corrector2(Data2D& data){
     // // data.cells[0].p[CORRECTED_2] = 1.0; 
     // // Update Velocities bzw. faces
     // for (int i = 0; i < data.nFaces; i++) {
-    //     double alpha_u_relax = 0.1;
     //     Face2D *curFace = &data.faces[i];
     //     if (curFace->bType_u == INNERCELL) {
     //         if (i < data.nhorizontalFaces) {
-    //             curFace->v[CORRECTED_2] = (1- alpha_u_relax)*curFace->v[INTERMEDIATE_2] + alpha_u_relax*((curFace->neighCells[SOUTH]->p[INTERMEDIATE_2] - curFace->neighCells[NORTH]->p[INTERMEDIATE_2]) * curFace->dx + curFace->neighbourSum) / curFace->a_p_tilde;
+    //             curFace->v[CORRECTED_2] = (1 - data.alpha_u_relax) * (curFace->v[INTERMEDIATE_2])  +  data.alpha_u_relax * (curFace->neighbourSum + (curFace->neighCells[DOWN]->p[INTERMEDIATE_2] - curFace->neighCells[UP]->p[INTERMEDIATE_2]) * curFace->dx) / curFace->a_p_tilde;
+    //             // curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2])  +  (curFace->neighbourSum + (curFace->neighCells[DOWN]->p[INTERMEDIATE_2] - curFace->neighCells[UP]->p[INTERMEDIATE_2]) * curFace->dx) / curFace->a_p_tilde);
+    //             // curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2] + curFace->v[CORRECTED_1];
     //         } else if (i >= data.nhorizontalFaces) {
-    //             curFace->u[CORRECTED_2] = (1- alpha_u_relax)*curFace->u[INTERMEDIATE_2] + alpha_u_relax*((curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy + curFace->neighbourSum) / curFace->a_p_tilde;
+    //             curFace->u[CORRECTED_2] = (1 - data.alpha_u_relax) * (curFace->u[INTERMEDIATE_2])  +  data.alpha_u_relax * (curFace->neighbourSum + (curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy) / curFace->a_p_tilde;
+    //              curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2])  +  (curFace->neighbourSum + (curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy) / curFace->a_p_tilde;
+    //             // curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2] + curFace->u[CORRECTED_1];
     //         }
     //     } else if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID){
     //         if (i < data.nhorizontalFaces) {
@@ -517,20 +511,20 @@ void corrector2(Data2D& data){
     //         }
     //     } else if (curFace->bType_u == NEUMANN) {
     //         if (i < data.nhorizontalFaces) {
-    //             if(curFace->neighCells[UP] == nullptr || curFace->neighCells[UP]->bType_sc == SOLID)                                                     //TOP BOUNDARY (HORIZONTAL)
+    //             if(curFace->neighCells[UP] == nullptr || curFace->neighCells[UP]->bType_p == SOLID)                                                     //TOP BOUNDARY (HORIZONTAL)
     //             {
     //                 curFace->v[CORRECTED_2] = curFace->neighCells[DOWN]->faces[SOUTH]->v[CORRECTED_2] + curFace->g_v * curFace->dx;
     //             }
-    //             else if (curFace->neighCells[DOWN] == nullptr || curFace->neighCells[DOWN]->bType_sc == SOLID)                                           //BOTTOM BOUNDARY (HORIZONTAL) 
+    //             else if (curFace->neighCells[DOWN] == nullptr || curFace->neighCells[DOWN]->bType_p == SOLID)                                           //BOTTOM BOUNDARY (HORIZONTAL) 
     //             {
     //                 curFace->v[CORRECTED_2] = curFace->neighCells[UP]->faces[NORTH]->v[CORRECTED_2] - curFace->g_v * curFace->dx;
     //             }
     //         } else {
-    //             if (curFace->neighCells[LEFT] == nullptr || curFace->neighCells[LEFT]->bType_sc == SOLID)                                                 //LEFT BOUNDARY (VERTICAL) 
+    //             if (curFace->neighCells[LEFT] == nullptr || curFace->neighCells[LEFT]->bType_p == SOLID)                                                 //LEFT BOUNDARY (VERTICAL) 
     //             {
     //                 curFace->u[CORRECTED_2] = curFace->neighCells[RIGHT]->faces[EAST]->u[CORRECTED_2] - curFace->g_u * curFace->dy;
     //             }
-    //             else if (curFace->neighCells[RIGHT] == nullptr || curFace->neighCells[RIGHT]->bType_sc == SOLID)                                         //RIGHT BOUNDARY (VERTICAL)
+    //             else if (curFace->neighCells[RIGHT] == nullptr || curFace->neighCells[RIGHT]->bType_p == SOLID)                                         //RIGHT BOUNDARY (VERTICAL)
     //             {
     //                 curFace->u[CORRECTED_2] = curFace->neighCells[LEFT]->faces[WEST]->u[CORRECTED_2] + curFace->g_u * curFace->dy;
     //             }
@@ -556,31 +550,31 @@ void calcNeighbourSums(Data2D& data){
             if (i < data.nhorizontalFaces){
                 double sum_a_v_nb = 0;
                 if (curFace->a_e != 0) {
-                    sum_a_v_nb += curFace->a_e * curFace->neighCells[DOWN]->neighCells[EAST]->faces[NORTH]->v[CORRECTED_1];
+                    sum_a_v_nb -= curFace->a_e * curFace->neighCells[DOWN]->neighCells[EAST]->faces[NORTH]->v[CORRECTED_1];
                 }
                 if (curFace->a_w != 0) {
-                    sum_a_v_nb += curFace->a_w * curFace->neighCells[DOWN]->neighCells[WEST]->faces[NORTH]->v[CORRECTED_1];
+                    sum_a_v_nb -= curFace->a_w * curFace->neighCells[DOWN]->neighCells[WEST]->faces[NORTH]->v[CORRECTED_1];
                 }
                 if (curFace->a_n != 0) {
-                    sum_a_v_nb += curFace->a_n * curFace->neighCells[NORTH]->faces[NORTH]->v[CORRECTED_1];
+                    sum_a_v_nb -= curFace->a_n * curFace->neighCells[NORTH]->faces[NORTH]->v[CORRECTED_1];
                 }
                 if (curFace->a_s != 0) {
-                    sum_a_v_nb += curFace->a_s * curFace->neighCells[SOUTH]->faces[NORTH]->v[CORRECTED_1];
+                    sum_a_v_nb -= curFace->a_s * curFace->neighCells[SOUTH]->faces[SOUTH]->v[CORRECTED_1];
                 }
                 curFace->neighbourSum = sum_a_v_nb;
             } else {
                 double sum_a_u_nb = 0;
                 if (curFace->a_e != 0) {
-                    sum_a_u_nb += curFace->a_e * curFace->neighCells[RIGHT]->faces[EAST]->u[CORRECTED_1];
+                    sum_a_u_nb -= curFace->a_e * curFace->neighCells[RIGHT]->faces[EAST]->u[CORRECTED_1];
                 }
                 if (curFace->a_w != 0) {
-                    sum_a_u_nb += curFace->a_w * curFace->neighCells[LEFT]->faces[EAST]->u[CORRECTED_1];
+                    sum_a_u_nb -= curFace->a_w * curFace->neighCells[LEFT]->faces[WEST]->u[CORRECTED_1];
                 }
                 if (curFace->a_n != 0) {
-                    sum_a_u_nb += curFace->a_n * curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->u[CORRECTED_1];
+                    sum_a_u_nb -= curFace->a_n * curFace->neighCells[LEFT]->neighCells[NORTH]->faces[EAST]->u[CORRECTED_1];
                 }
                 if (curFace->a_s != 0) {
-                    sum_a_u_nb += curFace->a_s * curFace->neighCells[LEFT]->neighCells[SOUTH]->faces[EAST]->u[CORRECTED_1];
+                    sum_a_u_nb -= curFace->a_s * curFace->neighCells[LEFT]->neighCells[SOUTH]->faces[EAST]->u[CORRECTED_1];
                 }
                 curFace->neighbourSum = sum_a_u_nb;
             }

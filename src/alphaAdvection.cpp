@@ -284,13 +284,17 @@ void preformXSweep(Data2D& data){
                     fe = curCell->alpha*data.dt*curCell->faces[EAST]->u[CORRECTED_2]*curCell->faces[EAST]->dy;
                 }
             } else {
-                if (curCell->neighCells[EAST]->alpha != 0 && curCell->neighCells[EAST]->alpha != 1){
+                if (curCell->neighCells[EAST] == nullptr){
+                    fe = 0;
+                } else {
+                    if (curCell->neighCells[EAST]->alpha != 0 && curCell->neighCells[EAST]->alpha != 1){
                     fe = interfaceFlux(data, curCell->neighCells[EAST]->id, "WEST");
                     fe = curCell->neighCells[EAST]->alpha*data.dt*curCell->faces[EAST]->u[CORRECTED_2]*curCell->faces[EAST]->dy;
                     // std::cout << "fe geometrically: " << fe << std::endl;
-                } else {
-                    fe = curCell->neighCells[EAST]->alpha*data.dt*curCell->faces[EAST]->u[CORRECTED_2]*curCell->faces[EAST]->dy;
-                }
+                    } else {
+                        fe = curCell->neighCells[EAST]->alpha*data.dt*curCell->faces[EAST]->u[CORRECTED_2]*curCell->faces[EAST]->dy;
+                    }
+                }   
             }
             if (curCell->faces[WEST]->u[CORRECTED_2] < 0){
                 if (curCell->alpha != 0 && curCell->alpha != 1){
@@ -301,13 +305,17 @@ void preformXSweep(Data2D& data){
                     fw = curCell->alpha*data.dt*curCell->faces[WEST]->u[CORRECTED_2]*curCell->faces[WEST]->dy;
                 }
             } else {
-                if (curCell->neighCells[WEST]->alpha != 0 && curCell->neighCells[WEST]->alpha != 1){
+                if (curCell->neighCells[WEST] == nullptr){
+                    fw = 0;
+                } else {
+                    if (curCell->neighCells[WEST]->alpha != 0 && curCell->neighCells[WEST]->alpha != 1){
                     fw = interfaceFlux(data, curCell->neighCells[WEST]->id, "EAST");
                     fw = curCell->neighCells[WEST]->alpha*data.dt*curCell->faces[WEST]->u[CORRECTED_2]*curCell->faces[WEST]->dy;
                     // std::cout << "fw geometrically: " << fw << std::endl;
-                } else {
-                    fw = curCell->neighCells[WEST]->alpha*data.dt*curCell->faces[WEST]->u[CORRECTED_2]*curCell->faces[WEST]->dy;
-                }
+                    } else {
+                        fw = curCell->neighCells[WEST]->alpha*data.dt*curCell->faces[WEST]->u[CORRECTED_2]*curCell->faces[WEST]->dy;
+                    }
+                } 
             }
 
             double tmp = (curCell->alpha + fw - fe)/(1 - (data.dt*(curCell->faces[WEST]->u[CORRECTED_2] - curCell->faces[EAST]->u[CORRECTED_2]))/curCell->faces[NORTH]->dx);
@@ -376,11 +384,15 @@ void preformYSweep(Data2D& data){
                     gn = curCell->alpha*data.dt*curCell->faces[NORTH]->v[CORRECTED_2]*curCell->faces[NORTH]->dx;
                 }
             } else {
-                if (curCell->neighCells[NORTH]->alpha != 0 && curCell->neighCells[NORTH]->alpha != 1){
+                if (curCell->neighCells[NORTH] == nullptr){
+                    gn = 0;
+                } else {
+                    if (curCell->neighCells[NORTH]->alpha != 0 && curCell->neighCells[NORTH]->alpha != 1){
                     gn = interfaceFlux(data, curCell->neighCells[NORTH]->id, "SOUTH");
                     gn = curCell->neighCells[NORTH]->alpha*data.dt*curCell->faces[NORTH]->v[CORRECTED_2]*curCell->faces[NORTH]->dx;
-                } else {
-                    gn = curCell->neighCells[NORTH]->alpha*data.dt*curCell->faces[NORTH]->v[CORRECTED_2]*curCell->faces[NORTH]->dx;
+                    } else {
+                        gn = curCell->neighCells[NORTH]->alpha*data.dt*curCell->faces[NORTH]->v[CORRECTED_2]*curCell->faces[NORTH]->dx;
+                    }
                 }
             }
             if (curCell->faces[SOUTH]->v[CORRECTED_2] < 0){
@@ -391,11 +403,15 @@ void preformYSweep(Data2D& data){
                     gs = curCell->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
                 }
             } else {
-                if (curCell->neighCells[SOUTH]->alpha != 0 && curCell->neighCells[SOUTH]->alpha != 1){
-                    gs = interfaceFlux(data, curCell->neighCells[SOUTH]->id, "NORTH");
-                    gs = curCell->neighCells[SOUTH]->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
+                if (curCell->neighCells[SOUTH] == nullptr){
+                    gs = 0;
                 } else {
-                    gs = curCell->neighCells[SOUTH]->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
+                    if (curCell->neighCells[SOUTH]->alpha != 0 && curCell->neighCells[SOUTH]->alpha != 1){
+                        gs = interfaceFlux(data, curCell->neighCells[SOUTH]->id, "NORTH");
+                        gs = curCell->neighCells[SOUTH]->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
+                    } else {
+                        gs = curCell->neighCells[SOUTH]->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
+                    }
                 }
             }
     
@@ -478,7 +494,7 @@ void advectAlpha(Data2D& data){
     //for testing
     // assignInitasCorrVel(data);
     
-
+    
     preformXSweep(data);
     handleExcessAlpha(data);
     //reconstructInterfaceLines(data);

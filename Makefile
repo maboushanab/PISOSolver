@@ -1,7 +1,7 @@
 # Compiler and linker settings
 CC = g++
-CFLAGS = -g -O0 -I./include/eigen-3.4.0 -Wall -Wextra -std=c++17 -I/usr/include/python3.8 -I/usr/include/python3.8  -Wno-unused-result -Wsign-compare -g -fdebug-prefix-map=/build/python3.8-YBWzqg/python3.8-3.8.10=. -specs=/usr/share/dpkg/no-pie-compile.specs -fstack-protector -Wformat -Werror=format-security  -DNDEBUG -g -fwrapv -Wall -I/path/to/boost/include -fPIE
-LDFLAGS = -O0 -I/usr/include/python3.8 -I/usr/include/python3.8  -Wno-unused-result -Wsign-compare -g -fdebug-prefix-map=/build/python3.8-YBWzqg/python3.8-3.8.10=. -specs=/usr/share/dpkg/no-pie-compile.specs -fstack-protector -Wformat -Werror=format-security  -DNDEBUG -g -fwrapv -Wall -L/path/to/boost/lib -lboost_python38 -lpython3.8 -pie
+CFLAGS = -g -O3 -I./include/eigen-3.4.0 -Wall -Wextra -std=c++17 -I/usr/include/python3.8 -I/usr/include/python3.8  -Wno-unused-result -Wsign-compare -g -fdebug-prefix-map=/build/python3.8-YBWzqg/python3.8-3.8.10=. -specs=/usr/share/dpkg/no-pie-compile.specs -fstack-protector -Wformat -Werror=format-security  -DNDEBUG -g -fwrapv -Wall -I/path/to/boost/include -fPIE
+LDFLAGS = -O3 -I/usr/include/python3.8 -I/usr/include/python3.8  -Wno-unused-result -Wsign-compare -g -fdebug-prefix-map=/build/python3.8-YBWzqg/python3.8-3.8.10=. -specs=/usr/share/dpkg/no-pie-compile.specs -fstack-protector -Wformat -Werror=format-security  -DNDEBUG -g -fwrapv -Wall -L/path/to/boost/lib -lboost_python38 -lpython3.8 -pie
 
 # Directories
 SRCDIR = src

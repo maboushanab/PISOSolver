@@ -6,28 +6,29 @@
 bool fSetup(const char* alphaFilePath, Data2D& data){
     std::cout << "Setup" << std::endl;
     std::vector<int> alphaPointIds;
-    if (alphaFilePath != nullptr) {
-        std::ifstream file(alphaFilePath);
-        // put all integers line by line into a new entry in the vector
-        if (!file.is_open()) {
-            std::cerr << "Error opening file: " << alphaFilePath << std::endl;
-            return 1;
-        }
-        std::string line;
 
-        // Read the file line by line
-        while (std::getline(file, line)) {
-            std::istringstream iss(line); // Create a string stream for each line
-            int alphaPointId;
-
-            // Extract integers from the line and add them to the vector
-            while (iss >> alphaPointId) {
-                alphaPointIds.push_back(alphaPointId);
-            }
-        }
-
-        file.close(); // Close the file when done
+    std::ifstream file(alphaFilePath);
+    // put all integers line by line into a new entry in the vector
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << alphaFilePath << std::endl;
+        return 1;
     }
+    std::string line;
+    // Read the file line by line
+    while (std::getline(file, line)) {
+        std::istringstream iss(line); // Create a string stream for each line
+        int alphaPointId;
+
+        // Extract integers from the line and add them to the vector
+        while (iss >> alphaPointId) {
+            alphaPointIds.push_back(alphaPointId);
+        }
+        if (alphaPointIds.size() == 0){
+            std::cout << "Alpha Point list empty." << std::endl;
+        }
+    }
+
+    file.close(); // Close the file when done
     
 
     // face definition
@@ -68,6 +69,7 @@ bool fSetup(const char* alphaFilePath, Data2D& data){
         // std::cout << "Cell " << data.cells[l].id << ": (" << data.cells[l].points[0]->id << ", " << data.cells[l].points[1]->id << ", " << data.cells[l].points[2]->id << ", " << data.cells[l].points[3]->id << ")" << std::endl;
         l++;
     }
+    data.isThereAlpha = false;
     for (int i = 0; i < data.nCells; i++) {
         int pointCounter = 0;
         double p = 0;
@@ -78,8 +80,17 @@ bool fSetup(const char* alphaFilePath, Data2D& data){
                 }
             }
         }
-        if (pointCounter == 4) {
+        if (pointCounter == 4){
             data.cells[i].alpha = 1;
+            data.isThereAlpha = true;
+        }
+        if (pointCounter == 2){ 
+            data.cells[i].alpha = 0.5;
+            data.isThereAlpha = true;
+        }
+        if (pointCounter == 1){
+            data.cells[i].alpha = 0.25;
+            data.isThereAlpha = true;
         }
     }
         
@@ -190,8 +201,8 @@ bool fSetup(const char* alphaFilePath, Data2D& data){
     double p = 0;
     for (int i = 0; i < data.nCells; i++){
         data.cells[i].vol = data.cells[i].faces[0]->dx * data.cells[i].faces[2]->dy;
-        data.cells[i].x = data.cells[i].faces[2]->x;
-        data.cells[i].y = data.cells[i].faces[0]->y;
+        data.cells[i].x = data.cells[i].faces[SOUTH]->x;
+        data.cells[i].y = data.cells[i].faces[WEST]->y;
         data.cells[i].interfaceLine.m = 0;
         data.cells[i].interfaceLine.n = 0;
         if (data.cells[data.nCells - 1 - i].alpha == 1){

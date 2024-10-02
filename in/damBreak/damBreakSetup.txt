@@ -8,7 +8,7 @@
 # Mode
 # Transient == 0
 # Steady State == 1
-1
+0
 
 # Convection Scheme
 # Upwind == 0
@@ -16,7 +16,7 @@
 # Central == 2
 # Exponential == 3
 # Hybrid == 4
-4
+0
 
 # Velocity Solver
 # IMPLICIT BiCGStab == 0
@@ -36,19 +36,19 @@
 0
 
 # density1 viscosity1
-1000 0.01
+1000 10e-6
 
 # density2 viscosity2
 1 1.48e-5
 
 # inertia dampening
-0.8333333
+1
 
 # pressure under-relaxation
-0.2
+0.1
 
 # velocity under-relaxation
-0.8
+0.6
 
 # u_top
 0
@@ -60,4 +60,7 @@
 0
 
 # v_right
+0
+
+# gravity (0= true, 1= false)
 0

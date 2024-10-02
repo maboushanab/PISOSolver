@@ -73,7 +73,7 @@ bottom_vel
 # x-Direction
 
 left_u
-10
+0.1
 right_u
 0
 
