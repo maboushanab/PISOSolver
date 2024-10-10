@@ -543,7 +543,7 @@ void corrector2(Data2D& data){
     // }
 }
 
-void calcNeighbourSums(Data2D& data, int step){
+void calcNeighbourSums(Data2D& data){
     for (int i=0; i < data.nFaces; i++){
         Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL){
