@@ -40,9 +40,6 @@ bool fSetup(const char* alphaFilePath, Data2D& data){
         data.faces[k].id = k;
         data.faces[k].points[0] = &data.points[i];
         data.faces[k].points[1] = &data.points[i + 1];
-        // std::cout << "Face " << data.faces[k].id << ": (" << data.faces[k].points[0]->id << ", " << data.faces[k].points[1]->id << ")" << std::endl;
-        // std::cout << "Point 1 " << data.faces[k].points[0]->id << ": (" << data.faces[k].points[0]->x << ", " << data.faces[k].points[0]->y << ")" << std::endl;
-        // std::cout << "Point 2 " << data.faces[k].points[1]->id << ": (" << data.faces[k].points[1]->x << ", " << data.faces[k].points[1]->y << ")" << std::endl;
         k++;
     }
     
@@ -51,7 +48,6 @@ bool fSetup(const char* alphaFilePath, Data2D& data){
         data.faces[k].id = k;
         data.faces[k].points[0] = &data.points[i];
         data.faces[k].points[1] = &data.points[i + data.dimX];
-        // std::cout << "Face " << data.faces[k].id << ": (" << data.faces[k].points[0]->id << ", " << data.faces[k].points[1]->id << ")" << std::endl;
         k++;
     }
 
@@ -65,8 +61,6 @@ bool fSetup(const char* alphaFilePath, Data2D& data){
         data.cells[l].points[2] = &data.points[i + data.dimX];
         data.cells[l].points[3] = &data.points[i + data.dimX + 1];
         data.cells[l].alpha_prev = 0;
-        // data.cells[l].alpha = 1;
-        // std::cout << "Cell " << data.cells[l].id << ": (" << data.cells[l].points[0]->id << ", " << data.cells[l].points[1]->id << ", " << data.cells[l].points[2]->id << ", " << data.cells[l].points[3]->id << ")" << std::endl;
         l++;
     }
     data.isThereAlpha = false;
@@ -85,11 +79,11 @@ bool fSetup(const char* alphaFilePath, Data2D& data){
             data.isThereAlpha = true;
         }
         if (pointCounter == 2){ 
-            data.cells[i].alpha = 0.5;
+            data.cells[i].alpha = 0.75;
             data.isThereAlpha = true;
         }
         if (pointCounter == 1){
-            data.cells[i].alpha = 0.25;
+            data.cells[i].alpha = 0.5;
             data.isThereAlpha = true;
         }
     }
@@ -203,8 +197,10 @@ bool fSetup(const char* alphaFilePath, Data2D& data){
         data.cells[i].vol = data.cells[i].faces[0]->dx * data.cells[i].faces[2]->dy;
         data.cells[i].x = data.cells[i].faces[SOUTH]->x;
         data.cells[i].y = data.cells[i].faces[WEST]->y;
-        data.cells[i].interfaceLine.m = 0;
-        data.cells[i].interfaceLine.n = 0;
+        data.cells[i].interfaceVectorLine.origin[0] = 0;
+        data.cells[i].interfaceVectorLine.origin[1] = 0;
+        data.cells[i].interfaceVectorLine.direction[0] = 0;
+        data.cells[i].interfaceVectorLine.direction[1] = 0;
         if (data.cells[data.nCells - 1 - i].alpha == 1){
             if(!isInside){
                 isInside = true;

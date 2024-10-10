@@ -86,11 +86,11 @@ std::vector<double> findPointRegion(std::ifstream& file, std::vector<std::vector
 }
 
 int main() {
-    std::ifstream file("damBreak.mesh");
+    std::ifstream file("voftest.mesh");
     std::vector<double> p1 = {0.0, 0.0};
-    std::vector<double> p2 = {0.146, 0.0};
-    std::vector<double> p3 = {0.0, 0.292};
-    std::vector<double> p4 = {0.146, 0.292};
+    std::vector<double> p2 = {10.0, 0.0};
+    std::vector<double> p3 = {0.0, 3.0};
+    std::vector<double> p4 = {10.0, 3.0};
     std::vector<std::vector<double>> regionCoords = {p1, p2, p3, p4};
     findPointRegion(file, regionCoords);
     return 0;

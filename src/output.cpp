@@ -94,15 +94,19 @@ bool fOutputVTKframe(Data2D& data, std::string finalDirectoryName, int step) {
     for (int i = 0; i < data.nCells; ++i) {
         outputFile << data.cells[i].u[step] << " " << data.cells[i].v[step] << " " << 0 << std::endl;
     }
-    //Write the cell data (n,m)
-        outputFile << "VECTORS f(n,m) float" << std::endl;
-    for (int i = 0; i < data.nCells; ++i) {
-        outputFile << data.cells[i].interfaceLine.n << " " << data.cells[i].interfaceLine.m << " " << 0 << std::endl;
-    }
-    //Write the cell data (n,m)
-        outputFile << "VECTORS (x,y) float" << std::endl;
+    //Write the cell data (x,y)
+    outputFile << "VECTORS (x,y) float" << std::endl;
     for (int i = 0; i < data.nCells; ++i) {
         outputFile << data.cells[i].x << " " << data.cells[i].y << " " << 0 << std::endl;
+    }
+    //Write the cell data (interfaceVectorLine.o)
+    outputFile << "VECTORS interfaceBasePoint float" << std::endl;
+    for (int i = 0; i < data.nCells; ++i) {
+        outputFile << data.cells[i].interfaceVectorLine.origin[0] << " " << data.cells[i].interfaceVectorLine.origin[1] << " " << 0 << std::endl;
+    }
+    outputFile << "VECTORS normalVector float" << std::endl;
+    for (int i = 0; i < data.nCells; ++i) {
+        outputFile << data.cells[i].normalVector[0] << " " << data.cells[i].normalVector[1] << " " << 0 << std::endl;
     }
     // Close the output file
     outputFile.close();

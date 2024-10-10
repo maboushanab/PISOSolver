@@ -61,9 +61,9 @@ struct Point2D {
     double y; 
 };
 
-struct Line2D {
-    double m;
-    double n;
+struct VectorLine2D {
+    double origin[2];
+    double direction[2];
 };
 
 struct Face2D {
@@ -106,7 +106,7 @@ struct Cell2D {
     Face2D* faces[4];       //cell faces
     Point2D* points[4];     //cell points
     Cell2D* neighCells[4];  //neighbour cells
-    Line2D interfaceLine;   //interface line
+    VectorLine2D interfaceVectorLine; //interface vector line
 
 
     double x;              //cell center x-coordinate
@@ -117,8 +117,6 @@ struct Cell2D {
     double alphaFlux;       // alpha flux
 
     double normalVector[2]; //normal vector
-    bool xCoordinates;                 //x coordinates for interface line
-    Eigen::Vector2d interfaceMidPoint; //point on the interface line
 
     // numeric quantities
     int     bType_p;   	       // pressure boundary type

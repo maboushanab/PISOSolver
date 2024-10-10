@@ -34,133 +34,193 @@ double calculateFluxLength(Data2D data, int cellId, std::string direction){
     }
 }
 
-void calculatePolygonArea(double n, double m, Eigen::Vector2d normalVec, Eigen::Vector2d p1, Eigen::Vector2d p2, Eigen::Vector2d p3, Eigen::Vector2d p4, std::vector<Eigen::Vector2d>& polygon, bool& isIntersecting, bool xCoordinates){
-    const std::vector<Eigen::Vector2d> cell = {
-        p1, p2, p3, p4
-    }; 
-    std::vector<Eigen::Vector2d> cellEdit = {
+void calculatePolygonArea(Data2D& data, int cellId, Eigen::Vector2d p1, Eigen::Vector2d p2, Eigen::Vector2d p3, Eigen::Vector2d p4, std::vector<Eigen::Vector2d>& polygon, bool& isIntersecting){
+    Cell2D *curCell = &data.cells[cellId];
+    std::vector<Eigen::Vector2d> cell = {
         p1, p2, p3, p4
     }; 
     Eigen::Vector2d vertex;
-    // create stack starting from p1 and seeing if the line intersects between two points
     std::vector<Eigen::Vector2d> intersectionPoints;
     std::vector<Eigen::Vector2d> polygon1;
     std::vector<Eigen::Vector2d> polygon2;
-
-    if (x(cell[0][1], m, n, xCoordinates) >= cell[0](0) && x(cell[0][1], m, n, xCoordinates) <= cell[1](0)) { // top face
-        vertex(0) = x(cell[0](1), m, n, xCoordinates);
-        vertex(1) = cell[0](1);
-        intersectionPoints.push_back(vertex);
+    std::vector<bool> intersections;
+    // potential intersection at the top face (y = dy/2 and x \in [-dx/2, dx/2])
+    double lambdaTop = 0;
+    if (curCell->normalVector[0] != 0){ // If the interface is not completely horizontal (to avoid division by zero)
+        lambdaTop = -(p1[1] - curCell->interfaceVectorLine.origin[1])/curCell->normalVector[0];
+    } else {
+        lambdaTop = 1e6; // throws the point outside the interval
     }
-    if (y(cell[1](0), m, n, xCoordinates) >= cell[2](1) && y(cell[1](0), m, n, xCoordinates) <= cell[1](1)) { // right face
-        vertex(0) = cell[1](0);
-        vertex(1) = y(cell[1](0), m, n, xCoordinates);
-        intersectionPoints.push_back(vertex);
-    }
-    if (x(cell[2](1), m, n, xCoordinates) >= cell[3](0) && x(cell[2](1), m, n, xCoordinates) <= cell[2](0)) { // bottom face
-        vertex(0) = x(cell[2](1), m, n, xCoordinates);
-        vertex(1) = cell[2](1);
-        intersectionPoints.push_back(vertex);
-    }
-    if (y(cell[3](0), m, n, xCoordinates) >= cell[2](1) && y(cell[3](0), m, n, xCoordinates) <= cell[0](1)) { // left face
-        vertex(0) = cell[3](0);
-        vertex(1) = y(cell[3](0), m, n, xCoordinates);
-        intersectionPoints.push_back(vertex);
+    double x_top = curCell->interfaceVectorLine.origin[0] + lambdaTop*curCell->normalVector[1];
+    if (x_top >= p1[0] && x_top < p2[0]){
+        intersections.push_back(true);
+    } else {
+        intersections.push_back(false);
     }
 
-    if (intersectionPoints.size() == 0){
+    //  potential intersection at the right face (x = dx/2 and y \in [-dy/2, dy/2])
+    double lambdaRight = 0;
+    if (curCell->normalVector[1] != 0){ // If the interface is not completely vertical (to avoid division by zero)
+        lambdaRight = (p2[0] - curCell->interfaceVectorLine.origin[0])/curCell->normalVector[1];
+    } else {
+        lambdaRight = 1e6; // throws the point outside the interval
+    }
+    double y_right = curCell->interfaceVectorLine.origin[1] - lambdaRight*curCell->normalVector[0];
+    if (y_right > p3[1] && y_right <= p2[1]){
+        intersections.push_back(true);
+    } else {
+        intersections.push_back(false);
+    }
+
+    // potential intersection at the bottom face (y = -dy/2 and x \in [-dx/2, dx/2])
+    double lambdaBottom = 0;
+    if (curCell->normalVector[0] != 0){ // If the interface is not completely horizontal (to avoid division by zero)
+        lambdaBottom = -(-p3[1] - curCell->interfaceVectorLine.origin[1])/curCell->normalVector[0];
+    } else {
+        lambdaBottom = 1e6; // throws the point outside the interval
+    }
+    double x_bottom = curCell->interfaceVectorLine.origin[0] + lambdaBottom*curCell->normalVector[1];
+    if (x_bottom > p1[0] && x_bottom <= p2[0]){
+        intersections.push_back(true);
+    } else {
+        intersections.push_back(false);
+    }
+
+    // potential intersection at the left face (x = -dx/2 and y \in [-dy/2, dy/2])
+    double lambdaLeft = 0;
+    if (curCell->normalVector[1] != 0){ // If the interface is not completely vertical (to avoid division by zero)
+        lambdaLeft = (p4[0] - curCell->interfaceVectorLine.origin[0])/curCell->normalVector[1];
+    } else {
+        lambdaLeft = 1e6; // throws the point outside the interval
+    }
+    double y_left = curCell->interfaceVectorLine.origin[1] - lambdaLeft*curCell->normalVector[0];
+    if (y_left >= p3[1] && y_left < p2[1]){
+        intersections.push_back(true);
+    } else {
+        intersections.push_back(false);
+    }
+    if (!intersections[0] && !intersections[1] && !intersections[2] && !intersections[3]){
         isIntersecting = false;
+        //std::cout << "No intersection" << std::endl;
         return;
     } else {
-        isIntersecting = true;
+        isIntersecting = true;  
     }
 
-    if (intersectionPoints[1](0) == cell[1](0)){
-        polygon1.push_back(cellEdit[2]);
-        cellEdit.erase(cellEdit.begin() + 2);
-        if (intersectionPoints[0](0) == cell[0](0)){
-            // break;
-        } else {
-            polygon1.push_back(cellEdit[2]);
-            cellEdit.erase(cellEdit.begin() + 2);
-            if (intersectionPoints[0](0) == cell[1](0)){
-                // break;
-            } else {
-                polygon1.push_back(cellEdit[0]);
-                cellEdit.erase(cellEdit.begin());
-            }
-        }
-    } else if (intersectionPoints[1](1) == cell[3](1)){
-        polygon1.push_back(cellEdit[3]);
-        cellEdit.erase(cellEdit.begin() + 3);
-        if (intersectionPoints[0](0) == cell[0](0)){
-            // break;
-        } else {
-            polygon1.push_back(cellEdit[0]);
-            cellEdit.erase(cellEdit.begin());
-            if (intersectionPoints[0](1) == cell[0](1)){
-                // break;
-            } else {
-                polygon1.push_back(cellEdit[0]);
-                cellEdit.erase(cellEdit.begin());
-            }
-        }
-    } else if (intersectionPoints[1](0) == cell[0](0)){
-        polygon1.push_back(cellEdit[0]);
-        cellEdit.erase(cellEdit.begin());
-        if (intersectionPoints[0](1) == cell[0](1)){
-            // break;
-        } else {
-            polygon1.push_back(cellEdit[0]);
-            cellEdit.erase(cellEdit.begin());
-            if (intersectionPoints[0](0) == cell[1](0)){
-                // break;
-            } else {
-                polygon1.push_back(cellEdit[0]);
-                cellEdit.erase(cellEdit.begin());
-            }
-        }
-    } else if (intersectionPoints[1](1) == cell[0](1)){
-        polygon1.push_back(cellEdit[1]);
-        cellEdit.erase(cellEdit.begin() + 1);
-        if (intersectionPoints[0](0) == cell[1](0)){
-            // break;
-        } else {
-            polygon1.push_back(cellEdit[1]);
-            cellEdit.erase(cellEdit.begin() + 1);
-            if (intersectionPoints[0](1) == cell[3](1)){
-                // break;
-            } else {
-                polygon1.push_back(cellEdit[1]);
-                cellEdit.erase(cellEdit.begin() + 1);
-            }
-        }
-    }
-    polygon1.push_back(intersectionPoints[0]);
-    polygon1.push_back(intersectionPoints[1]);
-        
-    for (int i = 0; i < cellEdit.size(); i++){
-        polygon2.push_back(cellEdit[i]);
-    }
-    polygon2.push_back(intersectionPoints[1]);
-    polygon2.push_back(intersectionPoints[0]);
+    int caseId = 0;
+    // Combinations of intersections
+    if (intersections[0] && intersections[1]){
+        caseId = 1;
+        intersectionPoints.push_back(Eigen::Vector2d(x_top, p1[1]));
+        intersectionPoints.push_back(Eigen::Vector2d(p2[0], y_right));
+    } else if (intersections[0] && intersections[2]){
+        caseId = 2;
+        intersectionPoints.push_back(Eigen::Vector2d(x_top, p1[1]));
+        intersectionPoints.push_back(Eigen::Vector2d(x_bottom, p3[1]));
+    } else if (intersections[0] && intersections[3]){
+        caseId = 3;
+        intersectionPoints.push_back(Eigen::Vector2d(x_top, p1[1]));
+        intersectionPoints.push_back(Eigen::Vector2d(p1[0], y_left));
+    } else if (intersections[1] && intersections[2]){
+        caseId = 4;
+        intersectionPoints.push_back(Eigen::Vector2d(p2[0], y_right));
+        intersectionPoints.push_back(Eigen::Vector2d(x_bottom, p3[1]));
+    } else if (intersections[1] && intersections[3]){
+        caseId = 5;
+        intersectionPoints.push_back(Eigen::Vector2d(p2[0], y_right));
+        intersectionPoints.push_back(Eigen::Vector2d(p1[0], y_left));
+    } else if (intersections[2] && intersections[3]){
+        caseId = 6;
+        intersectionPoints.push_back(Eigen::Vector2d(x_bottom, p3[1]));
+        intersectionPoints.push_back(Eigen::Vector2d(p1[0], y_left));
+    };
 
-    if (intersectionPoints[1] == p1 || intersectionPoints[1] == p2 || intersectionPoints[1] == p3 || intersectionPoints[1] == p4){
-        polygon1.erase(polygon1.end() - 1);
-        polygon2.erase(polygon2.end() - 2);
-    }
-    if (intersectionPoints[0] == p1 || intersectionPoints[0] == p2 || intersectionPoints[0] == p3 || intersectionPoints[0] == p4){
-        polygon1.erase(polygon1.end() - 2);
-        polygon2.erase(polygon2.end() - 1);
-    }
+    switch (caseId){
+        case 1:
+            // Clockwise order polygon
+            polygon1.push_back(intersectionPoints[0]);
+            polygon1.push_back(cell[1]);
+            polygon1.push_back(intersectionPoints[1]);
+            // Counter-clockwise order polygon
+            polygon2.push_back(intersectionPoints[0]);
+            polygon2.push_back(cell[0]);
+            polygon2.push_back(cell[3]);
+            polygon2.push_back(cell[2]);
+            polygon2.push_back(intersectionPoints[1]);
+            break;
+        case 2:
+            // Clockwise order polygon
+            polygon1.push_back(intersectionPoints[0]);
+            polygon1.push_back(cell[1]);
+            polygon1.push_back(cell[2]);
+            polygon1.push_back(intersectionPoints[1]);
+            // Counter-clockwise order polygon
+            polygon2.push_back(intersectionPoints[0]);
+            polygon2.push_back(cell[0]);
+            polygon2.push_back(cell[3]);
+            polygon2.push_back(intersectionPoints[1]);
+            break;
+        case 3:
+            // Clockwise order polygon
+            polygon1.push_back(intersectionPoints[0]);
+            polygon1.push_back(cell[1]);
+            polygon1.push_back(cell[2]);
+            polygon1.push_back(cell[3]);
+            polygon1.push_back(intersectionPoints[1]);
+            // Counter-clockwise order polygon
+            polygon2.push_back(intersectionPoints[0]);
+            polygon2.push_back(cell[0]);
+            polygon2.push_back(intersectionPoints[1]);
+            break;
+        case 4:
+            // Clockwise order polygon
+            polygon1.push_back(intersectionPoints[0]);
+            polygon1.push_back(cell[2]);
+            polygon1.push_back(intersectionPoints[1]);
 
-    Eigen::Vector2d edgeVec = intersectionPoints[1] - intersectionPoints[0];
+            // Counter-clockwise order polygon
+            polygon2.push_back(intersectionPoints[0]);
+            polygon2.push_back(cell[1]);
+            polygon2.push_back(cell[0]);
+            polygon2.push_back(cell[3]);
+            polygon2.push_back(intersectionPoints[1]);
+            break;
+        case 5:
+            // Clockwise order polygon
+            polygon1.push_back(intersectionPoints[0]);
+            polygon1.push_back(cell[2]);
+            polygon1.push_back(cell[3]);
+            polygon1.push_back(intersectionPoints[1]);
+
+            // Counter-clockwise order polygon
+            polygon2.push_back(intersectionPoints[0]);
+            polygon2.push_back(cell[1]);
+            polygon2.push_back(cell[0]);
+            polygon2.push_back(intersectionPoints[1]);
+            break;
+        case 6:
+            // Clockwise order polygon
+            polygon1.push_back(intersectionPoints[0]);
+            polygon1.push_back(cell[3]);
+            polygon1.push_back(intersectionPoints[1]);
+
+            // Counter-clockwise order polygon
+            polygon2.push_back(intersectionPoints[0]);
+            polygon2.push_back(cell[2]);
+            polygon2.push_back(cell[1]);
+            polygon2.push_back(cell[0]);
+            polygon2.push_back(intersectionPoints[1]);
+            break;
+    }
+    Eigen::Vector2d edgeVec = intersectionPoints[1] - intersectionPoints[0];  //edgevector for going clockwise through polygon 2
+    Eigen::Vector2d normalVec = {curCell->normalVector[0], curCell->normalVector[1]};
     double crossProduct = edgeVec.x()*normalVec.y() - edgeVec.y()*normalVec.x();
-    if (crossProduct < 0){
+    if (crossProduct < 0){ // if the cross product is negative, the normal vector is pointing inward into polygon 2 => polygon 1 is the correct polygon
         polygon = polygon1;
     } else {
         polygon = polygon2;
     }
+
 }
 
 double shoeLaceFormula(std::vector<Eigen::Vector2d> polygon){
@@ -173,17 +233,17 @@ double shoeLaceFormula(std::vector<Eigen::Vector2d> polygon){
     return area;
 }
 
-bool isSectionInsideAlpha(double p, Eigen::Vector2d interfaceMidPoint, Eigen::Vector2d normalVec, std::string direction){
+bool isSectionInsideAlpha(Data2D data, int cellId, double p, std::string direction){
     double s = 0;
     if (direction == "WEST" || direction == "EAST"){
-        s = (p - interfaceMidPoint(0))/normalVec(0);
+        s = (p - data.cells[cellId].interfaceVectorLine.origin[0])/data.cells[cellId].normalVector[0];
     } else {
-        s = (p - interfaceMidPoint(1))/normalVec(1);
+        s = (p - data.cells[cellId].interfaceVectorLine.origin[1])/data.cells[cellId].normalVector[1];
     }
     if (s > 0){
-        return true;
-    } else {
         return false;
+    } else {
+        return true;
     }
 }
 
@@ -194,17 +254,14 @@ double interfaceFlux(Data2D& data, int cellId, std::string direction){
     double dy = curCell.faces[SOUTH]->dx;
 
     double fluxLength = calculateFluxLength(data, cellId, direction);
-    // std::cout << "fluxLength: " << fluxLength << std::endl;
+    std::cout << "fluxLength: " << fluxLength << std::endl;
 
     if (fluxLength == 0){
         return 0.0;
     }
 
     double fluxPoint = 0;
-    Eigen::Vector2d InterNormal = {curCell.normalVector[0], curCell.normalVector[1]};
     bool isIntersecting = false;
-    double m = curCell.interfaceLine.m;
-    double n = curCell.interfaceLine.n;
     std::vector<Eigen::Vector2d> polygon;
     Eigen::Vector2d p1 = {0, 0};
     Eigen::Vector2d p2 = {0, 0};
@@ -244,7 +301,8 @@ double interfaceFlux(Data2D& data, int cellId, std::string direction){
     // std::cout << "p2: " << p2(0) << " " << p2(1) << std::endl;
     // std::cout << "p3: " << p3(0) << " " << p3(1) << std::endl;
     // std::cout << "p4: " << p4(0) << " " << p4(1) << std::endl;
-    calculatePolygonArea(n, m, InterNormal, p1, p2, p3, p4, polygon, isIntersecting, curCell.xCoordinates);
+    calculatePolygonArea(data, cellId, p1, p2, p3, p4, polygon, isIntersecting);
+    // std::cout << "polygon size: " << polygon.size() << std::endl;
     // for (int i = 0; i < polygon.size(); i++){
     //     std::cout << "polygon: " << polygon[i](0) << " " << polygon[i](1) << std::endl;
     // }
@@ -253,7 +311,8 @@ double interfaceFlux(Data2D& data, int cellId, std::string direction){
         double totalArea = dx*dy;
         return liquidArea/totalArea;
     } else {
-        bool isInside = isSectionInsideAlpha(fluxPoint, curCell.interfaceMidPoint, InterNormal, direction);
+        bool isInside = isSectionInsideAlpha(data, cellId, fluxPoint, direction);
+        std::cout << "isInside: " << isInside << std::endl;
         if (isInside == true){
             double liquidArea = shoeLaceFormula({p1, p2, p3, p4});
             double totalArea = dx*dy;
@@ -262,6 +321,7 @@ double interfaceFlux(Data2D& data, int cellId, std::string direction){
             return 0.0;
         }
     }
+    return 0;
 }
 
 void preformXSweep(Data2D& data){
@@ -278,8 +338,7 @@ void preformXSweep(Data2D& data){
             if (curCell->faces[EAST]->u[CORRECTED_2] > 0){
                 if (curCell->alpha != 0 && curCell->alpha != 1){
                     fe = interfaceFlux(data, curCell->id, "EAST");
-                    fe = curCell->alpha*data.dt*curCell->faces[EAST]->u[CORRECTED_2]*curCell->faces[EAST]->dy;
-                    // std::cout << "fe geometrically: " << fe << std::endl; 
+                    std::cout << "fe geometrically: " << fe << std::endl; 
                 } else {
                     fe = curCell->alpha*data.dt*curCell->faces[EAST]->u[CORRECTED_2]*curCell->faces[EAST]->dy;
                 }
@@ -289,8 +348,7 @@ void preformXSweep(Data2D& data){
                 } else {
                     if (curCell->neighCells[EAST]->alpha != 0 && curCell->neighCells[EAST]->alpha != 1){
                     fe = interfaceFlux(data, curCell->neighCells[EAST]->id, "WEST");
-                    fe = curCell->neighCells[EAST]->alpha*data.dt*curCell->faces[EAST]->u[CORRECTED_2]*curCell->faces[EAST]->dy;
-                    // std::cout << "fe geometrically: " << fe << std::endl;
+                    std::cout << "fe geometrically: " << fe << std::endl;
                     } else {
                         fe = curCell->neighCells[EAST]->alpha*data.dt*curCell->faces[EAST]->u[CORRECTED_2]*curCell->faces[EAST]->dy;
                     }
@@ -299,8 +357,7 @@ void preformXSweep(Data2D& data){
             if (curCell->faces[WEST]->u[CORRECTED_2] < 0){
                 if (curCell->alpha != 0 && curCell->alpha != 1){
                     fw = interfaceFlux(data, curCell->id, "WEST");
-                    fw = curCell->alpha*data.dt*curCell->faces[WEST]->u[CORRECTED_2]*curCell->faces[WEST]->dy;
-                    // std::cout << "fw geometrically: " << fw << std::endl;
+                    std::cout << "fw geometrically: " << fw << std::endl;
                 } else {
                     fw = curCell->alpha*data.dt*curCell->faces[WEST]->u[CORRECTED_2]*curCell->faces[WEST]->dy;
                 }
@@ -310,8 +367,7 @@ void preformXSweep(Data2D& data){
                 } else {
                     if (curCell->neighCells[WEST]->alpha != 0 && curCell->neighCells[WEST]->alpha != 1){
                     fw = interfaceFlux(data, curCell->neighCells[WEST]->id, "EAST");
-                    fw = curCell->neighCells[WEST]->alpha*data.dt*curCell->faces[WEST]->u[CORRECTED_2]*curCell->faces[WEST]->dy;
-                    // std::cout << "fw geometrically: " << fw << std::endl;
+                    std::cout << "fw geometrically: " << fw << std::endl;
                     } else {
                         fw = curCell->neighCells[WEST]->alpha*data.dt*curCell->faces[WEST]->u[CORRECTED_2]*curCell->faces[WEST]->dy;
                     }
@@ -379,7 +435,6 @@ void preformYSweep(Data2D& data){
             if (curCell->faces[NORTH]->v[CORRECTED_2] > 0){
                 if (curCell->alpha != 0 && curCell->alpha != 1){
                     gn = interfaceFlux(data, curCell->id, "NORTH");
-                    gn = curCell->alpha*data.dt*curCell->faces[NORTH]->v[CORRECTED_2]*curCell->faces[NORTH]->dx;
                 } else {
                     gn = curCell->alpha*data.dt*curCell->faces[NORTH]->v[CORRECTED_2]*curCell->faces[NORTH]->dx;
                 }
@@ -389,7 +444,6 @@ void preformYSweep(Data2D& data){
                 } else {
                     if (curCell->neighCells[NORTH]->alpha != 0 && curCell->neighCells[NORTH]->alpha != 1){
                     gn = interfaceFlux(data, curCell->neighCells[NORTH]->id, "SOUTH");
-                    gn = curCell->neighCells[NORTH]->alpha*data.dt*curCell->faces[NORTH]->v[CORRECTED_2]*curCell->faces[NORTH]->dx;
                     } else {
                         gn = curCell->neighCells[NORTH]->alpha*data.dt*curCell->faces[NORTH]->v[CORRECTED_2]*curCell->faces[NORTH]->dx;
                     }
@@ -398,7 +452,6 @@ void preformYSweep(Data2D& data){
             if (curCell->faces[SOUTH]->v[CORRECTED_2] < 0){
                 if (curCell->alpha != 0 && curCell->alpha != 1){
                     gs = interfaceFlux(data, curCell->id, "SOUTH");
-                    gs = curCell->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
                 } else {
                     gs = curCell->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
                 }
@@ -408,7 +461,6 @@ void preformYSweep(Data2D& data){
                 } else {
                     if (curCell->neighCells[SOUTH]->alpha != 0 && curCell->neighCells[SOUTH]->alpha != 1){
                         gs = interfaceFlux(data, curCell->neighCells[SOUTH]->id, "NORTH");
-                        gs = curCell->neighCells[SOUTH]->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
                     } else {
                         gs = curCell->neighCells[SOUTH]->alpha*data.dt*curCell->faces[SOUTH]->v[CORRECTED_2]*curCell->faces[SOUTH]->dx;
                     }
@@ -487,18 +539,25 @@ void assignInitasCorrVel(Data2D& data){
     }
 }
 
-    
+void resetNormalVectors(Data2D& data){
+    for (int i = 0; i < data.nCells; i++){
+        data.cells[i].normalVector[0] = 0;
+        data.cells[i].normalVector[1] = 0;
+    }
+}
 
 void advectAlpha(Data2D& data){
 
     //for testing
-    // assignInitasCorrVel(data);
+    assignInitasCorrVel(data);
     
-    
+    reconstructInterfaceLines(data);
     preformXSweep(data);
+    resetNormalVectors(data);
     handleExcessAlpha(data);
-    //reconstructInterfaceLines(data);
+    reconstructInterfaceLines(data);
     preformYSweep(data);
     handleExcessAlpha(data);
-    //reconstructInterfaceLines(data);
+    resetNormalVectors(data);
+
 }

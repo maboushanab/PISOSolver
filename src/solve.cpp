@@ -49,7 +49,7 @@ void iterateSteady(Data2D& data, int iteration){
         correctPressureEquation(data, INTERMEDIATE_1);
         corrector1(data);
 
-        // calcNeighbourSums(data);
+        // calcNeighbourSums(data, CORRECTED_1);
         // correctPressureEquation(data, INTERMEDIATE_2);
         corrector2(data);
     }
@@ -65,10 +65,12 @@ void iterateTransient(Data2D& data, int iteration, bool iterateTime){
     predictXVelocityField(data);
     predictYVelocityField(data);
 
+    calcNeighbourSums(data, INTERMEDIATE_1);
     correctPressureEquation(data, INTERMEDIATE_1);
     corrector1(data);
 
-    // correctPressureEquation(data, INTERMEDIATE_2);
+    calcNeighbourSums(data, CORRECTED_1);
+    correctPressureEquation(data, INTERMEDIATE_2);
     corrector2(data);
 
     checkConvergence(data, iteration);
@@ -301,7 +303,7 @@ void calcCFL(Data2D& data){
     }
     maxCFL = std::abs(maxU) * data.dt / maxDx;
     std::cout << "CFL: " << maxCFL << std::endl;
-    if (maxCFL > 0.2){
-        data.dt = 0.2 * maxDx / std::abs(maxU);
+    if (maxCFL > 0.1){
+        data.dt = 0.1 * maxDx / std::abs(maxU);
     }
 }

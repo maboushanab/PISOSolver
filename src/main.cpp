@@ -46,17 +46,26 @@ int main(int argc, char** argv) {
 
 // int main(int argc, char** argv) {
 //     auto start = std::chrono::high_resolution_clock::now();
-//     std::srand(std::time(0));
 //     Data2D data;
 //     const char* inputFilePath = argv[1];
+//     std::cout << "Input file path: " << inputFilePath << std::endl;
 //     const char* setupFilePath = argv[2];
+//     std::cout << "Setup file path: " << setupFilePath << std::endl;
+//     const char* alphaFilePath = argv[3];
+//     if (argc < 4) {
+//         std::cout << "No alpha file path provided" << std::endl;
+//     } else {
+//         const char* alphaFilePath = argv[3];
+//         std::cout << "Alpha file path: " << alphaFilePath << std::endl;
+//     }
 
 //     bool input = fInput(inputFilePath, setupFilePath, data);
-//     bool setup = fSetup(data);
+//     bool setup = fSetup(alphaFilePath, data);
 //     std::string directoryName = createDirectory();
-//     reconstructInterfaceLines(data);
-//     unstaggerGrid(data, INITIAL);
 //     fOutputVTKframe(data, directoryName, INITIAL);
+//     // reconstructInterfaceLines(data);
+//     unstaggerGrid(data, INITIAL);
+//     // fOutputVTKframe(data, directoryName, INITIAL);
 //     data.timeStep++;
 //     advectAlpha(data);
 //     fOutputVTKframe(data, directoryName, CORRECTED_2);

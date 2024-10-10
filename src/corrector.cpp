@@ -463,87 +463,87 @@ void corrector1(Data2D& data) {
 }
 
 void corrector2(Data2D& data){
-    // for (int i = 0; i < data.nCells; i++) {
-    //     Cell2D *curCell = &data.cells[i];
-    //     if (curCell->bType_p == INNERCELL || curCell->bType_p == NEUMANN) {
-    //         curCell->p[CORRECTED_2] = curCell->p[CORRECTED_1]  + data.alpha_p_relax * (curCell->p[INTERMEDIATE_2] - curCell->p[CORRECTED_1]);
-    //         // curCell->p[CORRECTED_2] = curCell->p[INTERMEDIATE_2] + curCell->p[CORRECTED_1];
-    //     }
-    // }
-    // // Update Boundary Conditions 
-    // std::stack<Cell2D*> cornerCells; //saves the corner cells to update them after the other cells for average pressure
-    // for (int i = 0; i < data.nCells; i++){
-    //     Cell2D *curCell = &data.cells[i];
-    //     if (curCell->bType_p == DIRICHLET || curCell->bType_p == SOLID) {
-    //         curCell->p[CORRECTED_2] = curCell->p[INITIAL];
-    //     }
-    // }
-    // // data.cells[0].p[CORRECTED_2] = 1.0; 
-    // // Update Velocities bzw. faces
-    // for (int i = 0; i < data.nFaces; i++) {
-    //     Face2D *curFace = &data.faces[i];
-    //     if (curFace->bType_u == INNERCELL) {
-    //         if (i < data.nhorizontalFaces) {
-    //             curFace->v[CORRECTED_2] = (1 - data.alpha_u_relax) * (curFace->v[INTERMEDIATE_2])  +  data.alpha_u_relax * (curFace->neighbourSum + (curFace->neighCells[DOWN]->p[INTERMEDIATE_2] - curFace->neighCells[UP]->p[INTERMEDIATE_2]) * curFace->dx) / curFace->a_p_tilde;
-    //             // curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2])  +  (curFace->neighbourSum + (curFace->neighCells[DOWN]->p[INTERMEDIATE_2] - curFace->neighCells[UP]->p[INTERMEDIATE_2]) * curFace->dx) / curFace->a_p_tilde);
-    //             // curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2] + curFace->v[CORRECTED_1];
-    //         } else if (i >= data.nhorizontalFaces) {
-    //             curFace->u[CORRECTED_2] = (1 - data.alpha_u_relax) * (curFace->u[INTERMEDIATE_2])  +  data.alpha_u_relax * (curFace->neighbourSum + (curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy) / curFace->a_p_tilde;
-    //              curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2])  +  (curFace->neighbourSum + (curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy) / curFace->a_p_tilde;
-    //             // curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2] + curFace->u[CORRECTED_1];
-    //         }
-    //     } else if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID){
-    //         if (i < data.nhorizontalFaces) {
-    //             curFace->v[CORRECTED_2] = curFace->v[INITIAL];
-    //         } else if (i >= data.nhorizontalFaces) {
-    //             curFace->u[CORRECTED_2] = curFace->u[INITIAL];
-    //         }
-    //     }
-    // }
-    //     // Update Boundary Conditions
-    // for (int i = 0; i < data.nFaces; i++) {
-    //     Face2D *curFace = &data.faces[i];
-    //     if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID){
-    //         if (i < data.nhorizontalFaces) {
-    //             curFace->v[CORRECTED_2] = curFace->v[INITIAL];
-    //         } else if (i >= data.nhorizontalFaces) {
-    //             curFace->u[CORRECTED_2] = curFace->u[INITIAL];
-    //         }
-    //     } else if (curFace->bType_u == NEUMANN) {
-    //         if (i < data.nhorizontalFaces) {
-    //             if(curFace->neighCells[UP] == nullptr || curFace->neighCells[UP]->bType_p == SOLID)                                                     //TOP BOUNDARY (HORIZONTAL)
-    //             {
-    //                 curFace->v[CORRECTED_2] = curFace->neighCells[DOWN]->faces[SOUTH]->v[CORRECTED_2] + curFace->g_v * curFace->dx;
-    //             }
-    //             else if (curFace->neighCells[DOWN] == nullptr || curFace->neighCells[DOWN]->bType_p == SOLID)                                           //BOTTOM BOUNDARY (HORIZONTAL) 
-    //             {
-    //                 curFace->v[CORRECTED_2] = curFace->neighCells[UP]->faces[NORTH]->v[CORRECTED_2] - curFace->g_v * curFace->dx;
-    //             }
-    //         } else {
-    //             if (curFace->neighCells[LEFT] == nullptr || curFace->neighCells[LEFT]->bType_p == SOLID)                                                 //LEFT BOUNDARY (VERTICAL) 
-    //             {
-    //                 curFace->u[CORRECTED_2] = curFace->neighCells[RIGHT]->faces[EAST]->u[CORRECTED_2] - curFace->g_u * curFace->dy;
-    //             }
-    //             else if (curFace->neighCells[RIGHT] == nullptr || curFace->neighCells[RIGHT]->bType_p == SOLID)                                         //RIGHT BOUNDARY (VERTICAL)
-    //             {
-    //                 curFace->u[CORRECTED_2] = curFace->neighCells[LEFT]->faces[WEST]->u[CORRECTED_2] + curFace->g_u * curFace->dy;
-    //             }
-    //         }
-    //     }
-    // } 
-    
-    for (int i= 0; i<data.nCells; i++){
+    for (int i = 0; i < data.nCells; i++) {
         Cell2D *curCell = &data.cells[i];
-        curCell->p[CORRECTED_2] = curCell->p[CORRECTED_1];
+        if (curCell->bType_p == INNERCELL || curCell->bType_p == NEUMANN) {
+            curCell->p[CORRECTED_2] = curCell->p[CORRECTED_1]  + data.alpha_p_relax * (curCell->p[INTERMEDIATE_2] - curCell->p[CORRECTED_1]);
+            // curCell->p[CORRECTED_2] = curCell->p[INTERMEDIATE_2] + curCell->p[CORRECTED_1];
+        }
     }
-    for (int i= 0; i<data.nFaces; i++){
+    // Update Boundary Conditions 
+    std::stack<Cell2D*> cornerCells; //saves the corner cells to update them after the other cells for average pressure
+    for (int i = 0; i < data.nCells; i++){
+        Cell2D *curCell = &data.cells[i];
+        if (curCell->bType_p == DIRICHLET || curCell->bType_p == SOLID) {
+            curCell->p[CORRECTED_2] = curCell->p[INITIAL];
+        }
+    }
+    // data.cells[0].p[CORRECTED_2] = 1.0; 
+    // Update Velocities bzw. faces
+    for (int i = 0; i < data.nFaces; i++) {
         Face2D *curFace = &data.faces[i];
-        curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2];
-        curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2];
+        if (curFace->bType_u == INNERCELL) {
+            if (i < data.nhorizontalFaces) {
+                curFace->v[CORRECTED_2] = (1 - data.alpha_u_relax) * (curFace->v[INTERMEDIATE_2])  +  data.alpha_u_relax * (curFace->neighbourSum + (curFace->neighCells[DOWN]->p[INTERMEDIATE_2] - curFace->neighCells[UP]->p[INTERMEDIATE_2]) * curFace->dx) / curFace->a_p_tilde;
+                // curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2]  +  (curFace->neighbourSum + (curFace->neighCells[DOWN]->p[INTERMEDIATE_2] - curFace->neighCells[UP]->p[INTERMEDIATE_2]) * curFace->dx) / curFace->a_p_tilde;
+                // curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2] + curFace->v[CORRECTED_1];
+            } else if (i >= data.nhorizontalFaces) {
+                curFace->u[CORRECTED_2] = (1 - data.alpha_u_relax) * (curFace->u[INTERMEDIATE_2])  +  data.alpha_u_relax * (curFace->neighbourSum + (curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy) / curFace->a_p_tilde;
+                // curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2]  +  (curFace->neighbourSum + (curFace->neighCells[LEFT]->p[INTERMEDIATE_2] - curFace->neighCells[RIGHT]->p[INTERMEDIATE_2]) * curFace->dy) / curFace->a_p_tilde;
+                // curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2] + curFace->u[CORRECTED_1];
+            }
+        } else if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID){
+            if (i < data.nhorizontalFaces) {
+                curFace->v[CORRECTED_2] = curFace->v[INITIAL];
+            } else if (i >= data.nhorizontalFaces) {
+                curFace->u[CORRECTED_2] = curFace->u[INITIAL];
+            }
+        }
     }
+        // Update Boundary Conditions
+    for (int i = 0; i < data.nFaces; i++) {
+        Face2D *curFace = &data.faces[i];
+        if (curFace->bType_u == DIRICHLET || curFace->bType_u == SOLID){
+            if (i < data.nhorizontalFaces) {
+                curFace->v[CORRECTED_2] = curFace->v[INITIAL];
+            } else if (i >= data.nhorizontalFaces) {
+                curFace->u[CORRECTED_2] = curFace->u[INITIAL];
+            }
+        } else if (curFace->bType_u == NEUMANN) {
+            if (i < data.nhorizontalFaces) {
+                if(curFace->neighCells[UP] == nullptr || curFace->neighCells[UP]->bType_p == SOLID)                                                     //TOP BOUNDARY (HORIZONTAL)
+                {
+                    curFace->v[CORRECTED_2] = curFace->neighCells[DOWN]->faces[SOUTH]->v[CORRECTED_2] + curFace->g_v * curFace->dx;
+                }
+                else if (curFace->neighCells[DOWN] == nullptr || curFace->neighCells[DOWN]->bType_p == SOLID)                                           //BOTTOM BOUNDARY (HORIZONTAL) 
+                {
+                    curFace->v[CORRECTED_2] = curFace->neighCells[UP]->faces[NORTH]->v[CORRECTED_2] - curFace->g_v * curFace->dx;
+                }
+            } else {
+                if (curFace->neighCells[LEFT] == nullptr || curFace->neighCells[LEFT]->bType_p == SOLID)                                                 //LEFT BOUNDARY (VERTICAL) 
+                {
+                    curFace->u[CORRECTED_2] = curFace->neighCells[RIGHT]->faces[EAST]->u[CORRECTED_2] - curFace->g_u * curFace->dy;
+                }
+                else if (curFace->neighCells[RIGHT] == nullptr || curFace->neighCells[RIGHT]->bType_p == SOLID)                                         //RIGHT BOUNDARY (VERTICAL)
+                {
+                    curFace->u[CORRECTED_2] = curFace->neighCells[LEFT]->faces[WEST]->u[CORRECTED_2] + curFace->g_u * curFace->dy;
+                }
+            }
+        }
+    } 
+    
+    // for (int i= 0; i<data.nCells; i++){
+    //     Cell2D *curCell = &data.cells[i];
+    //     curCell->p[CORRECTED_2] = curCell->p[CORRECTED_1];
+    // }
+    // for (int i= 0; i<data.nFaces; i++){
+    //     Face2D *curFace = &data.faces[i];
+    //     curFace->u[CORRECTED_2] = curFace->u[INTERMEDIATE_2];
+    //     curFace->v[CORRECTED_2] = curFace->v[INTERMEDIATE_2];
+    // }
 }
 
-void calcNeighbourSums(Data2D& data){
+void calcNeighbourSums(Data2D& data, int step){
     for (int i=0; i < data.nFaces; i++){
         Face2D *curFace = &data.faces[i];
         if (curFace->bType_u == INNERCELL){

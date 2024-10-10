@@ -39,7 +39,7 @@
 1000 0.1
 
 # density2 viscosity2
-1000 0.001
+1000 0.1
 
 # inertia dampening
 0.83333

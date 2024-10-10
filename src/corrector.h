@@ -13,6 +13,6 @@ void corrector1(Data2D& data);
 void computePressureCoeff2(Data2D& data, int cellId);
 void corrector2(Data2D& data);
 
-void calcNeighbourSums(Data2D& data);
+void calcNeighbourSums(Data2D& data, int step);
 
 #endif
