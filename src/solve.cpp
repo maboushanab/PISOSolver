@@ -64,19 +64,21 @@ void iterateTransient(Data2D& data, int iteration, bool iterateTime){
     }
     predictXVelocityField(data);
     predictYVelocityField(data);
+    if (data.fixedPressure)
+    {
+        assignVelocities(data, INTERMEDIATE_1);
+    } else {
+        correctPressureEquation(data, INTERMEDIATE_1);
+        corrector1(data);
 
-    calcNeighbourSums(data, INTERMEDIATE_1);
-    correctPressureEquation(data, INTERMEDIATE_1);
-    corrector1(data);
-
-    calcNeighbourSums(data, CORRECTED_1);
-    correctPressureEquation(data, INTERMEDIATE_2);
-    corrector2(data);
-
-    checkConvergence(data, iteration);
-    if (data.isThereAlpha = true){
-        advectAlpha(data);
+        calcNeighbourSums(data);
+        correctPressureEquation(data, INTERMEDIATE_2);
+        corrector2(data);
     }
+        checkConvergence(data, iteration);
+        if (data.isThereAlpha = true){
+            advectAlpha(data);
+        }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

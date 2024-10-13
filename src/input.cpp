@@ -59,7 +59,9 @@ bool fInput(const char* inputFilePath, const char* setupFilePath, Data2D& data) 
     for (int i = 2 + data.nPoints*3; i < 2 + data.nPoints*3 + data.nCells*3; i+=3) {
         data.cells[p].id = (int)numbers[i];
         data.cells[p].bType_p = (int)numbers[i+1];
-        data.cells[p].bType_p = 0;
+        if (data.cells[p].bType_p == 2){
+            data.cells[p].bType_p = 0; 
+        }
         // data.cells[p].bType_p = 0;
         if (data.cells[p].bType_p == DIRICHLET || data.cells[p].bType_p == INNERCELL){
             data.cells[p].p[INITIAL] = numbers[i+2];

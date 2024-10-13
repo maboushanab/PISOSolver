@@ -1,5 +1,5 @@
 # MaxTime
-0.002
+0.1
 # dt 
 0.001
 # maxIteration
@@ -8,7 +8,7 @@
 # Mode
 # Transient == 0
 # Steady State == 1
-1
+0
 
 # Convection Scheme
 # Upwind == 0
@@ -36,10 +36,10 @@
 0
 
 # density1 viscosity1
-0.001 0.001
+0.001 49.15
 
 # density2 viscosity2
-1 49.15
+0.001 49.15
 
 # inertia dampening
 1

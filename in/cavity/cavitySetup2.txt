@@ -39,16 +39,16 @@
 1000 0.1
 
 # density2 viscosity2
-1000 0.001
+1000 0.1
 
 # inertia dampening
 1
 
 # pressure under-relaxation
-0.2
+1
 
 # velocity under-relaxation
-0.8
+1
 
 # u_top
 0.1

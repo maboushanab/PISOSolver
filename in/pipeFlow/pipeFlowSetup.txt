@@ -1,0 +1,66 @@
+# MaxTime
+0.01
+# dt 
+0.001
+# maxIteration
+5
+
+# Mode
+# Transient == 0
+# Steady State == 1
+0
+
+# Convection Scheme
+# Upwind == 0
+# Potenzgesetz == 1
+# Central == 2
+# Exponential == 3
+# Hybrid == 4
+0
+
+# Velocity Solver
+# IMPLICIT BiCGStab == 0
+# IMPLICIT SparseLU == 1
+# IMPLICIT GaussSeidl == 2
+# EXPLICIT == 3
+0
+
+# Fixed Pressure
+# false == 0
+# true == 1
+1
+
+# Pressure Solver
+# BiCGStab == 0
+# SparseLU == 1
+0
+
+# density1 viscosity1
+0.001 0.001
+
+# density2 viscosity2
+1 0.1
+
+# inertia dampening
+1
+
+# pressure under-relaxation
+0.2
+
+# velocity under-relaxation
+0.8
+
+# u_top
+0
+
+# u_bottom
+0
+
+# v_left
+0
+
+# v_right
+0
+
+# gravity (0= true, 1= false)
+1
